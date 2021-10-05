@@ -1,0 +1,19 @@
+.topbar-main {
+  height: 70px;
+  background-color: #154c8e;
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar-logo {
+  height: 55px;
+  cursor: pointer;
+  padding-left: 20px;
+}
+
+.topbar-title {
+  color: white;
+}
