@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Card } from 'antd';
 import { Topbar,Footer } from '../components';
+import Modes from './Modes';
 import './home.css';
 
 const { Content,Sider } = Layout;
@@ -9,6 +10,7 @@ const { SubMenu } = Menu;
 const MainPage = () =>
 {
     const [selectedMode,setSelectedMode] = useState();
+    const [modeId,setModeId] = useState();
 
     return (
         <Layout style={{minHeight:'100vh'}}>
@@ -21,20 +23,26 @@ const MainPage = () =>
                         style={{height:'100%',paddingTop:10}}
                         onClick={({key})=>setSelectedMode(key)}
                     >
-                        <Menu.Item key='sequential'>Układy Sekwencyjne</Menu.Item>
+                        <Menu.Item key='Układy Sekwencyjne'>Układy Sekwencyjne</Menu.Item>
                         <SubMenu key='siwinski' title='Metoda Siwińskiego'>
-                            <Menu.Item key='theoryTKL'>Teoria</Menu.Item>
-                            <Menu.Item key='examplesTKL' disabled>Przykłady</Menu.Item>
-                            <Menu.Item key='calculateTKL'>Kalkulator TKŁ</Menu.Item>
+                            <Menu.Item key='TKŁ - Teoria'>Teoria</Menu.Item>
+                            <Menu.Item key='TKŁ - Przykłady' disabled>Przykłady</Menu.Item>
+                            <Menu.Item key='Kalkulator TKŁ'>Kalkulator TKŁ</Menu.Item>
                         </SubMenu>
                         <SubMenu key='huffman' title='Metoda Huffmana'>
-                            <Menu.Item key='theoryHuff'>Teoria</Menu.Item>
-                            <Menu.Item key='examplesHuff' disabled>Przykłady</Menu.Item>
+                            <Menu.Item key='Metoda Huffmana - Teoria'>Teoria</Menu.Item>
+                            <Menu.Item key='Metoda Huffmana - Przykłady'disabled>Przykłady</Menu.Item>
                         </SubMenu>
                     </Menu>
                 </Sider>
                 <Layout>
                     <Content>
+                        <Card
+                            title={selectedMode || ''}
+                            className='panel-main-card'
+                        >
+                        {selectedMode && <Modes modeId={selectedMode}/>}
+                        </Card>
                     </Content>
                 </Layout>
             </Layout>

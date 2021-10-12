@@ -10,3 +10,12 @@
 .layout-main {
   display: flex;
 }
+
+.panel-main-card {
+  height: calc(100% - 32px);
+  min-height: 850px;
+  box-sizing: 'border-box';
+  margin: 16px;
+  display: flex;
+  flex-direction: column;
+}
