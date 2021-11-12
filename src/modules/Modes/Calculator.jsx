@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Form,InputNumber,Button,Card} from 'antd';
 import { LABELS_IN, LABELS_OUT } from '../../utils';
-import { TimeChart } from './TimeCharts';
+import { TimeChart } from './TimeCharts/index.js';
+import { ConnectionOrderTable } from './ConnectionOrderTable';
 
 const Calculator = () =>
 {
@@ -10,6 +11,8 @@ const Calculator = () =>
     const [signalsOut,setSignalsOut] = useState(1);
     const [labelsIn,setLabelsIn] = useState([]);
     const [labelsOut,setLabelsOut] = useState([]);
+    const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
+    const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
 
     const onFinish = ({sigIn,sigOut}) =>
     {
@@ -22,14 +25,25 @@ const Calculator = () =>
         setSignalsOut(sigOut);
         for(let i = 0; i < sigOut; i++)
         {
-            labelsIn.push(LABELS_OUT[i]);
+            labelsOut.push(LABELS_OUT[i]);
         }
         setStep(2);
 
+        setMappedLabelsIn(labelsIn.map(li=>
+            (
+                <TimeChart key={li} label={li}/>
+            )));
+
+        setMappedLabelsOut(labelsOut.map(lo=>
+            (
+                <TimeChart key={lo} label={lo}/>
+        )));
+
+        
     }
 
     return (
-        <div style={{display:'flex',justifyContent:'center',paddingTop:20}}>
+        <div style={{display:'flex',justifyContent:'center'}}>
             {step === 1 && (
                 <Form
                     name='signals'
@@ -58,24 +72,31 @@ const Calculator = () =>
                 </Form>
             )}
             {step === 2 && (
-                <div style={{display:'flex',flexDirection:'column',justifyContent:'space-between',height:'100'}}>
-                    <Card title='Sygnały Wejściowe' style={{minWidth:600}}>
+                <div style={{display:'flex',flexDirection:'column'}}>
+                    <Card title='Sygnały Wejściowe' bordered={false} style={{minWidth:600,marginBottom:20}}>
                         {
-                            labelsIn.map(li=>
-                                {
-                                    <TimeChart label={li}/>
-                                })
+                            mappedLabelsIn
                         }
                     </Card>
-                    <Card title='Sygnały Wyjściowe' style={{minWidth:600}}>
+                    <Card title='Sygnały Wyjściowe' bordered={false} style={{minWidth:600}}>
                         {
-                            labelsOut.map(lo=>
-                                {
-                                    <TimeChart label={lo}/>
-                                })
+                            mappedLabelsOut
                         }
                     </Card>
+                    <div style={{display:'flex',justifyContent: 'space-evenly'}}>
+                    <Button type='primary' onClick={()=>{
+                        setStep(1);
+                        setLabelsIn([]);
+                        setLabelsOut([]);
+                    }}>
+                            Powrót
+                    </Button>
+                    <Button type='primary' onClick={()=>setStep(3)}>Dalej</Button>
+                    </div>
                 </div>
+            )}
+            {step === 3 && (
+                <ConnectionOrderTable rows={3} cols ={10}/>
             )}
         </div>
     )

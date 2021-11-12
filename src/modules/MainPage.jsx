@@ -10,7 +10,6 @@ const { SubMenu } = Menu;
 const MainPage = () =>
 {
     const [selectedMode,setSelectedMode] = useState();
-    const [modeId,setModeId] = useState();
 
     return (
         <Layout style={{minHeight:'100vh'}}>
