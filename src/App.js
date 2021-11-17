@@ -1,11 +1,15 @@
 import React from 'react';
 import { MainPage } from './modules';
 import './App.css';
+import { SignalContextProvider } from './contexts';
 
 function App() {
+  localStorage.clear();
   return (
     <div className="App">
-      <MainPage/>
+      <SignalContextProvider>
+        <MainPage/>
+      </SignalContextProvider>
     </div>
   );
 }

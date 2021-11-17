@@ -3,6 +3,7 @@ import { Form,InputNumber,Button,Card} from 'antd';
 import { LABELS_IN, LABELS_OUT } from '../../utils';
 import { TimeChart } from './TimeCharts/index.js';
 import { ConnectionOrderTable } from './ConnectionOrderTable';
+import { SignalContext } from '../../contexts';
 
 const Calculator = () =>
 {
@@ -13,6 +14,7 @@ const Calculator = () =>
     const [labelsOut,setLabelsOut] = useState([]);
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
+    const {clearSignalContext} = React.useContext(SignalContext);
 
     const onFinish = ({sigIn,sigOut}) =>
     {
@@ -31,12 +33,12 @@ const Calculator = () =>
 
         setMappedLabelsIn(labelsIn.map(li=>
             (
-                <TimeChart key={li} label={li}/>
+                <TimeChart key={li} label={li} sigType='in'/>
             )));
 
         setMappedLabelsOut(labelsOut.map(lo=>
             (
-                <TimeChart key={lo} label={lo}/>
+                <TimeChart key={lo} label={lo} sigType='out'/>
         )));
 
         
@@ -88,10 +90,11 @@ const Calculator = () =>
                         setStep(1);
                         setLabelsIn([]);
                         setLabelsOut([]);
+                        clearSignalContext();
                     }}>
                             Powrót
                     </Button>
-                    <Button type='primary' onClick={()=>setStep(3)}>Dalej</Button>
+                    <Button type='primary' onClick={()=>{setStep(3)}}>Dalej</Button>
                     </div>
                 </div>
             )}
