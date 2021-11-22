@@ -1,63 +1,78 @@
 import React, { useState, useContext,useEffect} from 'react';
 import Chart from 'react-apexcharts';
-import { SignalContext } from '../../../contexts';
+import { SignalContext } from '../../../../contexts';
 import {Button,Card} from 'antd';
 import {ArrowUpOutlined,ArrowDownOutlined,CloseOutlined,UndoOutlined} from '@ant-design/icons'
 import './TimeChart.css';
-import { displayNotification } from '../../../components';
+import { displayNotification } from '../../../../components';
 import { options} from './options';
 
 const TimeChart = ({label,sigType}) => 
 {
 
-    const { addArray, updateArray } = useContext(SignalContext);
+    const {inArrays,outArrays, addArray, updateArray } = useContext(SignalContext);
     const [data,setData] = useState([]);
     const [xVal,setXVal] = useState(0);
     const [series,setSeries] = useState([{name:'',data: data}]);
+    const [maxTicks,setMaxTicks] = useState(10);
 
-    const chartOptions = {...options,yaxis: {...options.yaxis,title:{text:label}}};
+    console.log(inArrays,outArrays);
+
+    const chartOptions = {...options,yaxis: {...options.yaxis,title:{text:label}},
+            xaxis: {...options.xaxis,max:maxTicks}};
+
+    useEffect(()=>{
+        if(xVal > 10)
+        {
+            setMaxTicks(xVal);
+        }
+    },[xVal]);
 
 
     const onUpButtonClick = () =>
     {
-        if(data.length === 0)
+        const newData = [...data];
+        if(newData.length === 0)
         {
             addArray({data,label,sigType});
         }
 
-        data.push({x: xVal/*.toString()*/, y: 1});
+        newData.push({x: xVal, y: 1});
 
-        if(!updateArray({data,label,sigType}))
+        if(!updateArray({data: newData,label,sigType}))
         {
             displayNotification('error',`Ryzyko wyścigu w ${label}`,'Podanie sygnału w ten sposób spowoduje wyścig, cofnięto zmiany');
-            data.pop();
+            newData.pop();
         }
         else
         {
             setXVal(xVal+1);
         }
-        setSeries([{data: data}]);
+        setSeries([{data: newData}]);
+        setData(newData);
     }
 
     const onDownButtonClick = () =>
     {
-        if(data.length === 0)
+        const newData = [...data];
+        if(newData.length === 0)
         {
             addArray({data,label,sigType});
         }
 
-        data.push({x: xVal/*.toString()*/, y: 0});
+        newData.push({x: xVal, y: 0});
 
-        if(!updateArray({data,label,sigType}))
+        if(!updateArray({data: newData,label,sigType}))
         {
             displayNotification('error',`Ryzyko wyścigu w ${label}`,'Podanie sygnału w ten sposób spowoduje wyścig, cofnięto zmiany');
-            data.pop();
+            newData.pop();
         }
         else
         {
             setXVal(xVal+1);
         }
-        setSeries([{data: data}]);
+        setSeries([{data: newData}]);
+        setData(newData);
     }
 
     const onClearButtonClick = () =>
@@ -66,19 +81,23 @@ const TimeChart = ({label,sigType}) =>
         setData([]);
         updateArray({empty,label,sigType});
         setXVal(0);
-        setSeries([{data: data}]);
+        setSeries([{data: empty}]);
     }
 
     const onUndoButtonClick = () =>
     {
-        data.pop();
+        setData(oldData => {
+            const newData = [...oldData];
+            newData.pop();
+            return newData;
+        });
         updateArray({data,label,sigType});
         setXVal(xVal-1);
         setSeries([{data: data}]);
     }
 
     return (
-        <Card bordered={false} className='card' style={{ maxHeight:200,boxShadow:'none',marginTop:20,marginBottom:30,alignItems:'stretch'}}> 
+        <Card bordered={false} className='card' style={{ maxHeight:200,boxShadow:'none',alignItems:'stretch'}}> 
             <div style={{display:'flex',flex: '0 0 70%',alignItems:'center'}}>
                 <Chart series={series} options={chartOptions} height={150} width={400} type='line'/>
             </div>

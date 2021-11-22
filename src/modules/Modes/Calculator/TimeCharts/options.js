@@ -32,6 +32,19 @@ export const options =
           selection:
           {
               enabled: true,
+          },
+          events:
+          {
+              selection:
+                function(chartContext, { xaxis, yaxis }) 
+                {
+                    console.log(chartContext,xaxis,yaxis);
+                },
+              markerClick:
+                function(event, chartContext, { seriesIndex, dataPointIndex, config}) 
+                {
+                    console.log(event,chartContext,{ seriesIndex,dataPointIndex,config });
+                },
           }
 
         },
@@ -43,10 +56,9 @@ export const options =
           curve: 'stepline',
         },
         xaxis: {
-            max: 10,
             tickAmount: 'dataPoints',
             type: 'numeric',
-            tickPlacement: 'between',
+            tickPlacement: 'on',
             labels: {
                 show: false,
             },

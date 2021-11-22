@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Form,InputNumber,Button,Card} from 'antd';
-import { LABELS_IN, LABELS_OUT } from '../../utils';
-import { TimeChart } from './TimeCharts/index.js';
+import { LABELS_IN, LABELS_OUT } from '../../../utils';
 import { ConnectionOrderTable } from './ConnectionOrderTable';
-import { SignalContext } from '../../contexts';
+import { SignalContext } from '../../../contexts';
+import { TimeChart } from './TimeCharts';
+import './Calculator.css';
 
 const Calculator = () =>
 {
@@ -74,27 +75,31 @@ const Calculator = () =>
                 </Form>
             )}
             {step === 2 && (
-                <div style={{display:'flex',flexDirection:'column'}}>
-                    <Card title='Sygnały Wejściowe' bordered={false} style={{minWidth:600,marginBottom:20}}>
-                        {
-                            mappedLabelsIn
-                        }
-                    </Card>
-                    <Card title='Sygnały Wyjściowe' bordered={false} style={{minWidth:600}}>
-                        {
-                            mappedLabelsOut
-                        }
-                    </Card>
-                    <div style={{display:'flex',justifyContent: 'space-evenly'}}>
-                    <Button type='primary' onClick={()=>{
-                        setStep(1);
-                        setLabelsIn([]);
-                        setLabelsOut([]);
-                        clearSignalContext();
-                    }}>
+                <div style={{display:'flex',flexDirection:'column',minWidth:1200, alignItems: 'stretch'}}>
+                    <div style={{display:'flex',justifyContent:'space-evenly'}}>
+                        <Card title='Sygnały Wejściowe' bordered={false} style={{minWidth:500}}>
+                            {
+                                mappedLabelsIn
+                            }
+                        </Card>
+                        <Card title='Sygnały Wyjściowe' bordered={false} style={{minWidth:500}}>
+                            {
+                                mappedLabelsOut
+                            }
+                        </Card>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'center'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',minWidth: 250}}>
+                        <Button type='primary' onClick={()=>{
+                            setStep(1);
+                            setLabelsIn([]);
+                            setLabelsOut([]);
+                            clearSignalContext();
+                        }}>
                             Powrót
-                    </Button>
-                    <Button type='primary' onClick={()=>{setStep(3)}}>Dalej</Button>
+                        </Button>
+                        <Button type='primary' onClick={()=>{setStep(3)}}>Dalej</Button>
+                        </div>
                     </div>
                 </div>
             )}

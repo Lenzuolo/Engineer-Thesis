@@ -1,7 +1,7 @@
 import React from 'react';
 import { MODES } from '../../utils';
 import { Empty } from 'antd';
-import Calculator from './Calculator.jsx';
+import Calculator from './Calculator';
 
 const Modes = ({modeId}) =>
 {

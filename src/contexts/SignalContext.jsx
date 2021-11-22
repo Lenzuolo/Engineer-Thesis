@@ -1,10 +1,10 @@
 import React, { useCallback, useState} from 'react';
-import SignalService from '../services/signals';
+import { SignalService } from '../services';
 
 const defaultState = () =>(
 {
-    inArrays: localStorage.getItem('inArrays'),
-    outArrays: localStorage.getItem('outArrays'),
+    inArrays: [],
+    outArrays: [],
 });
 
 const SignalContext = React.createContext(defaultState());
@@ -15,98 +15,89 @@ const SignalContextProvider = ({children}) =>
 
     const addArray = useCallback(({data,label,sigType})=>
     {
-        if(sigType === 'in')
+        let arrName;
+        switch(sigType)
         {
-                const inArr = localStorage.getItem('inArrays');
-                if(inArr === null)
-                {
-                    const newArr = [{data: data, label: label}];
-                    localStorage.setItem('inArrays',JSON.stringify(newArr));
-                    return;
-                }
-                const arrayIn = JSON.parse(inArr);
-                if(arrayIn.find(arr=>arr.label === label))
-                {
-                    updateArray({data,label,sigType});
-                    return;
-                }
-                arrayIn.push({data: data, label: label});
-                localStorage.setItem('inArrays',JSON.stringify(arrayIn));
-                return;
+            case 'in':
+                arrName = 'inArrays';
+                break;
+            case 'out':
+                arrName = 'outArrays';
+                break;
+            default:
+                break;
         }
-        else if(sigType === 'out')
+
+        const signalArrayString = localStorage.getItem(arrName);
+        if(signalArrayString === null)
         {
-            const outArr = localStorage.getItem('outArrays');
-            if(outArr === null)
-            {
-                const newArr = [{data: data, label: label}];
-                localStorage.setItem('outArrays',JSON.stringify(newArr));
-                return;
-            }
-            const arrayOut = JSON.parse(outArr);
-            if(arrayOut.find(arr=>arr.label === label))
-            {
-                updateArray({data,label,sigType});
-                return;
-            }
-            arrayOut.push({data: data, label: label});
-            localStorage.setItem('outArrays',JSON.stringify(arrayOut));
+            const newArr = [{data: data, label: label}];
+            const newState = {...state,[arrName]:newArr};
+            setState(newState);
+            localStorage.setItem(arrName,JSON.stringify(newArr));
             return;
         }
-    },[]);
+        const signalArray = JSON.parse(signalArrayString);
+        if(signalArray.find(arr=>arr.label === label))
+        {
+            updateArray({data,label,sigType});
+            return;
+        }
+        signalArray.push({data: data, label: label});
+        localStorage.setItem(arrName,JSON.stringify(signalArray));
+        const newState = {...state,[arrName]:signalArray};
+        setState(newState);
+        return;
+    },[state]);
 
 
     const updateArray = useCallback(({data,label,sigType})=>{
-        if(sigType === 'in')
+        
+        
+        let arrName;
+        switch(sigType)
         {
-            const inArr = localStorage.getItem('inArrays');
-            const arrayIn = JSON.parse(inArr);
-            if(!SignalService.CheckSignals(arrayIn, data, label))
-            {
-                arrayIn.forEach(arr => {
-                    if(arr.label === label)
-                    {
-                        arr.data = data;
-                        return;
-                    }
-                });
-                localStorage.setItem('inArrays',JSON.stringify(arrayIn));
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            case 'in':
+                arrName = 'inArrays';
+                break;
+            case 'out':
+                arrName = 'outArrays';
+                break;
+            default:
+                break;
         }
-        else if(sigType === 'out')
+
+        const signalArrayString = localStorage.getItem(arrName);
+        const signalArray = JSON.parse(signalArrayString);
+
+        if(!SignalService.CheckSignals(signalArray, data, label))
         {
-            const outArr = localStorage.getItem('outArrays');
-            const arrayOut = JSON.parse(outArr);
-            if(!SignalService.CheckSignals(arrayOut, data, label))
-            {
-                arrayOut.forEach(arr => {
-                    if(arr.label === label)
-                    {
-                        arr.data = data;
-                        return;
-                    }
-                });
-                localStorage.setItem('outArrays',JSON.stringify(arrayOut));
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            signalArray.forEach(arr => {
+                if(arr.label === label)
+                {
+                    arr.data = data;
+                    return;
+                }
+            });
+
+            localStorage.setItem(arrName,JSON.stringify(signalArray));
+            const newState = {...state,[arrName]:signalArray};
+            setState(newState);
+            return true;
         }
-    },[]);
+        else
+        {
+            return false;
+        }
+
+    },[state]);
 
     const clearSignalContext = useCallback(()=>
     {
         localStorage.removeItem('inArrays');
         localStorage.removeItem('outArrays');
         setState(defaultState);
-    })
+    },[])
 
     return (
         <SignalContext.Provider value={{ ...state, addArray, updateArray, clearSignalContext }}>

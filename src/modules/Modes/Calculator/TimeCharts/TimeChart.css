@@ -1,3 +1,5 @@
 .card .ant-card-body {
   display: flex;
+  max-height: 160px;
+  padding: 5px;
 }
