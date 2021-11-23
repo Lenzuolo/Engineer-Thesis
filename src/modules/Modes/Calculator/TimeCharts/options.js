@@ -58,7 +58,7 @@ export const options =
         xaxis: {
             tickAmount: 'dataPoints',
             type: 'numeric',
-            tickPlacement: 'on',
+            tickPlacement: 'between',
             labels: {
                 show: false,
             },

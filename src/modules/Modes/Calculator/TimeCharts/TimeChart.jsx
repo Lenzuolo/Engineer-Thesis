@@ -10,23 +10,57 @@ import { options} from './options';
 const TimeChart = ({label,sigType}) => 
 {
 
-    const {inArrays,outArrays, addArray, updateArray } = useContext(SignalContext);
+    const {inArrays,outArrays, addArray, updateArray, arrayChanged } = useContext(SignalContext);
     const [data,setData] = useState([]);
     const [xVal,setXVal] = useState(0);
     const [series,setSeries] = useState([{name:'',data: data}]);
     const [maxTicks,setMaxTicks] = useState(10);
 
-    console.log(inArrays,outArrays);
 
     const chartOptions = {...options,yaxis: {...options.yaxis,title:{text:label}},
             xaxis: {...options.xaxis,max:maxTicks}};
 
     useEffect(()=>{
+        updateSignals();
         if(xVal > 10)
         {
             setMaxTicks(xVal);
         }
-    },[xVal]);
+    },[xVal,arrayChanged]);
+
+    const updateSignals = () => {
+        let newData;
+        switch(sigType){
+            case 'in':
+                if(inArrays.length !== 0){
+                    newData = inArrays.find(arr => arr.label === label);
+                    if(newData){
+                        let dataArr = newData.data;
+                        if(dataArr.length !== 0){
+                            setData(dataArr);
+                            setSeries([{data: dataArr}]);
+                            setXVal(dataArr[dataArr.length-1].x + 1);
+                        }
+                    }
+                }
+                break;
+            case 'out':
+                if(outArrays.length !== 0){
+                    newData = outArrays.find(arr => arr.label === label);
+                    if(newData){
+                        let dataArr = newData.data;
+                        if(dataArr.length !== 0){
+                            setData(dataArr);
+                            setSeries([{data: dataArr}]);
+                            setXVal(dataArr[dataArr.length-1].x + 1);
+                        }
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+    }
 
 
     const onUpButtonClick = () =>
@@ -79,21 +113,22 @@ const TimeChart = ({label,sigType}) =>
     {
         const empty = [];
         setData([]);
-        updateArray({empty,label,sigType});
+        updateArray({data: empty,label,sigType});
         setXVal(0);
         setSeries([{data: empty}]);
     }
 
     const onUndoButtonClick = () =>
     {
-        setData(oldData => {
-            const newData = [...oldData];
+        if(data.length > 0)
+        {
+            const newData = [...data];
             newData.pop();
-            return newData;
-        });
-        updateArray({data,label,sigType});
-        setXVal(xVal-1);
-        setSeries([{data: data}]);
+            updateArray({data: newData,label,sigType});
+            setXVal(xVal-1);
+            setSeries([{data: data}]);
+            setData(newData);
+        }
     }
 
     return (

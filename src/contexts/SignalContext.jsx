@@ -5,6 +5,7 @@ const defaultState = () =>(
 {
     inArrays: [],
     outArrays: [],
+    arrayChanged: false,
 });
 
 const SignalContext = React.createContext(defaultState());
@@ -32,7 +33,7 @@ const SignalContextProvider = ({children}) =>
         if(signalArrayString === null)
         {
             const newArr = [{data: data, label: label}];
-            const newState = {...state,[arrName]:newArr};
+            const newState = {...state,[arrName]:newArr,arrayChanged:!state.arrayChanged};
             setState(newState);
             localStorage.setItem(arrName,JSON.stringify(newArr));
             return;
@@ -45,7 +46,7 @@ const SignalContextProvider = ({children}) =>
         }
         signalArray.push({data: data, label: label});
         localStorage.setItem(arrName,JSON.stringify(signalArray));
-        const newState = {...state,[arrName]:signalArray};
+        const newState = {...state,[arrName]:signalArray,arrayChanged:!state.arrayChanged};
         setState(newState);
         return;
     },[state]);
@@ -68,7 +69,7 @@ const SignalContextProvider = ({children}) =>
         }
 
         const signalArrayString = localStorage.getItem(arrName);
-        const signalArray = JSON.parse(signalArrayString);
+        let signalArray = JSON.parse(signalArrayString);
 
         if(!SignalService.CheckSignals(signalArray, data, label))
         {
@@ -79,9 +80,9 @@ const SignalContextProvider = ({children}) =>
                     return;
                 }
             });
-
+            signalArray = SignalService.ContinueSignal(signalArray,data,label);
             localStorage.setItem(arrName,JSON.stringify(signalArray));
-            const newState = {...state,[arrName]:signalArray};
+            const newState = {...state,[arrName]:signalArray,arrayChanged:!state.arrayChanged};
             setState(newState);
             return true;
         }

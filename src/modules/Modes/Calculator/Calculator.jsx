@@ -77,12 +77,12 @@ const Calculator = () =>
             {step === 2 && (
                 <div style={{display:'flex',flexDirection:'column',minWidth:1200, alignItems: 'stretch'}}>
                     <div style={{display:'flex',justifyContent:'space-evenly'}}>
-                        <Card title='Sygnały Wejściowe' bordered={false} style={{minWidth:500}}>
+                        <Card title='Sygnały Wejściowe' className='signalCard' bordered={false} style={{minWidth:500}}>
                             {
                                 mappedLabelsIn
                             }
                         </Card>
-                        <Card title='Sygnały Wyjściowe' bordered={false} style={{minWidth:500}}>
+                        <Card title='Sygnały Wyjściowe' className='signalCard' bordered={false} style={{minWidth:500}}>
                             {
                                 mappedLabelsOut
                             }
