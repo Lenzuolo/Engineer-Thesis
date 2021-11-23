@@ -5,6 +5,9 @@
 
 function findMaxLength(arr)
 {
+    if(arr.length === 0){
+        return 0;
+    }
     const lengthArray = [];
     arr.forEach(a=>
         {
@@ -59,16 +62,15 @@ class SignalService
                     const currLength = signalArray[i].data.length;
                     const diff = data.length - currLength;
                     const lastElem = signalArray[i].data[currLength-1];
-                    for(let j=0;j<diff;j++)
+                    for(let j=1;j<=diff;j++)
                     {
-                        signalArray[i].data.push({x:lastElem.x + 1, y:lastElem.y});
+                        signalArray[i].data.push({x:lastElem.x + j, y:lastElem.y});
                     }
                 }
             }
             return signalArray;
         }
     }
-
 }
 
-export default SignalService;
+export {SignalService,findMaxLength};

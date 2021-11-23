@@ -2,26 +2,69 @@ import React, { useEffect, useState } from 'react';
 import './ConnectionOrderTable.css';
 
 
-const ConnectionOrderTable = ({rows,cols}) =>
+const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
 {
     const [mappedCols,setMappedCols] = useState([]);
-    useEffect(()=>{generateColumns();console.log(mappedCols);},[]);
+    const [mappedRows,setMappedRows] = useState([]);
+    const [tacts,setTacts] = useState(10);
+
+    useEffect(()=>{generateColumns();generateRows();},[]);
     
     const generateColumns = () =>
     {
         let colTab = [];
-        for(let i = 0; i < cols;i++)
+        for(let i = 0; i < tacts;i++)
         {
             colTab.push(i);
         }
-
-        console.log(colTab);
 
         setMappedCols(colTab.map(c=>
             (
             <th key={c}>{c}</th>
         )));
 
+    }
+
+    const generateRows = () =>{
+        
+        let i = 0;
+        let rowTab = [];
+
+        rowTab.push(
+            (
+            <tr key={i}>
+                <th key='state' rowSpan={signalsIn+signalsOut} colSpan={2} style={{width:'15%'}}>Stan sygnałów</th>
+                <th key='signal'>{`X${i}`}</th>
+                <th key='state value'>2<sup>{`${i}`}</sup></th>
+            </tr>                
+            )
+        );
+
+        for(i=1; i < signalsIn;i++)
+        {
+            rowTab.push(
+                (
+                    <tr key={i}>
+                        <th key='signal'>{`X${i}`}</th>
+                        <th key='state value'>2<sup>{`${i}`}</sup></th>
+                    </tr>
+                )
+            )
+        }
+
+        for(let j=0; j < signalsOut;i++,j++)
+        {
+            rowTab.push(
+                (
+                    <tr key={i}>
+                        <th key='signal'>{`Q${j}`}</th>
+                        <th key='state value'>2<sup>{`${i}`}</sup></th>
+                    </tr>
+                )
+            )
+        }
+
+        setMappedRows(rowTab);
     }
 
 
@@ -35,22 +78,7 @@ const ConnectionOrderTable = ({rows,cols}) =>
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <th rowSpan={rows} colSpan={2} style={{width:'15%'}}>Stan sygnałów</th>
-                <th>x</th>
-                <th>1</th>
-                <td>-</td>
-            </tr>
-            <tr>
-                <th>y</th>
-                <th>2</th>
-                <td>-</td>
-            </tr>
-            <tr>
-                <th>z</th>
-                <th>4</th>
-                <td>-</td>
-            </tr>
+                {mappedRows}
             </tbody>
             <tfoot>
                 <tr>

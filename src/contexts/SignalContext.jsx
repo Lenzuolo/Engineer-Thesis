@@ -1,5 +1,5 @@
 import React, { useCallback, useState} from 'react';
-import { SignalService } from '../services';
+import { findMaxLength, SignalService } from '../services';
 
 const defaultState = () =>(
 {
@@ -97,11 +97,25 @@ const SignalContextProvider = ({children}) =>
     {
         localStorage.removeItem('inArrays');
         localStorage.removeItem('outArrays');
-        setState(defaultState);
-    },[])
+        setState(defaultState());
+    },[]);
+
+    const areSignalsCorrect = useCallback((signalsIn,signalsOut)=>{
+        if(state.inArrays.length !== signalsIn || 
+            state.outArrays.length !== signalsOut)
+            {
+                return false;
+            }
+        const signalArray = [...state.inArrays,...state.outArrays];
+        const length = findMaxLength(signalArray);
+        if(length === 0){
+            return false;
+        }
+        return signalArray.every(arr=> arr.data.length === length);
+    },[state]);
 
     return (
-        <SignalContext.Provider value={{ ...state, addArray, updateArray, clearSignalContext }}>
+        <SignalContext.Provider value={{ ...state, addArray, updateArray, clearSignalContext, areSignalsCorrect }}>
           {children}
         </SignalContext.Provider>
       );

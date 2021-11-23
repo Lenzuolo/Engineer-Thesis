@@ -132,11 +132,11 @@ const TimeChart = ({label,sigType}) =>
     }
 
     return (
-        <Card bordered={false} className='card' style={{ maxHeight:200,boxShadow:'none',alignItems:'stretch'}}> 
+        <Card bordered={false} className='card' style={{ maxHeight:120,boxShadow:'none',alignItems:'stretch',padding:'5 0',width:'100%'}}> 
             <div style={{display:'flex',flex: '0 0 70%',alignItems:'center'}}>
-                <Chart series={series} options={chartOptions} height={150} width={400} type='line'/>
+                <Chart series={series} options={chartOptions} height={115} width={400} type='line'/>
             </div>
-            <div style={{flex: '0 0 30%',display:'flex',flexDirection:'column',alignItems:'center'}}>
+            <div style={{flex: '0 0 30%',display:'flex',flexDirection:'column',alignItems:'center',maxHeight: 90}}>
                 <Button icon={<ArrowUpOutlined/>} onClick={onUpButtonClick}/>
                 <Button icon={<ArrowDownOutlined/>} onClick={onDownButtonClick}/>
                 <Button icon={<CloseOutlined/>} onClick={onClearButtonClick}/>

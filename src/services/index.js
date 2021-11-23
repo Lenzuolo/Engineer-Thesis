@@ -1,1 +1,1 @@
-export {default as SignalService} from './signals.js';
+export * from './signals.js';

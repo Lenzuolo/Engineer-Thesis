@@ -4,6 +4,7 @@ import { LABELS_IN, LABELS_OUT } from '../../../utils';
 import { ConnectionOrderTable } from './ConnectionOrderTable';
 import { SignalContext } from '../../../contexts';
 import { TimeChart } from './TimeCharts';
+import { displayNotification } from '../../../components';
 import './Calculator.css';
 
 const Calculator = () =>
@@ -15,7 +16,7 @@ const Calculator = () =>
     const [labelsOut,setLabelsOut] = useState([]);
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
-    const {clearSignalContext} = React.useContext(SignalContext);
+    const {clearSignalContext,areSignalsCorrect} = React.useContext(SignalContext);
 
     const onFinish = ({sigIn,sigOut}) =>
     {
@@ -42,11 +43,11 @@ const Calculator = () =>
                 <TimeChart key={lo} label={lo} sigType='out'/>
         )));
 
-        
+        clearSignalContext();
     }
 
     return (
-        <div style={{display:'flex',justifyContent:'center'}}>
+        <div style={{display:'flex',justifyContent:'center',width:'100%'}}>
             {step === 1 && (
                 <Form
                     name='signals'
@@ -75,14 +76,14 @@ const Calculator = () =>
                 </Form>
             )}
             {step === 2 && (
-                <div style={{display:'flex',flexDirection:'column',minWidth:1200, alignItems: 'stretch'}}>
+                <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'stretch'}}>
                     <div style={{display:'flex',justifyContent:'space-evenly'}}>
-                        <Card title='Sygnały Wejściowe' className='signalCard' bordered={false} style={{minWidth:500}}>
+                        <Card title='Sygnały Wejściowe' className='signalCard' bordered={false} style={{width: '35%'}}>
                             {
                                 mappedLabelsIn
                             }
                         </Card>
-                        <Card title='Sygnały Wyjściowe' className='signalCard' bordered={false} style={{minWidth:500}}>
+                        <Card title='Sygnały Wyjściowe' className='signalCard' bordered={false} style={{width: '35%'}}>
                             {
                                 mappedLabelsOut
                             }
@@ -98,13 +99,22 @@ const Calculator = () =>
                         }}>
                             Powrót
                         </Button>
-                        <Button type='primary' onClick={()=>{setStep(3)}}>Dalej</Button>
+                        <Button type='primary' onClick={()=>{
+                            if(areSignalsCorrect(signalsIn,signalsIn)){
+                                setStep(3);
+                            }
+                            else{
+                                displayNotification('error','Błąd sygnałów','Nie wszystkie przebiegi mają tą samą ilość sygnałów');
+                            }
+                        }}>
+                            Dalej
+                        </Button>
                         </div>
                     </div>
                 </div>
             )}
             {step === 3 && (
-                <ConnectionOrderTable rows={3} cols ={10}/>
+                <ConnectionOrderTable signalsIn={signalsIn} signalsOut={signalsOut}/>
             )}
         </div>
     )

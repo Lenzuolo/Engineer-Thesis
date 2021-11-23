@@ -70,6 +70,9 @@ export const options =
                 show: true,
                 color: '#000000',
             },
+            axisTicks: {
+                show: false,
+            }
         },
         yaxis: {
             show: true,
