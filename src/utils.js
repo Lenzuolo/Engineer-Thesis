@@ -10,9 +10,9 @@ export const MODES =
 };
 
 export const LABELS_IN = [
-    'X1','X2','X3','X4','X5'
+    'X0','X1','X2','X3','X4'
 ];
 
 export const LABELS_OUT = [
-    'Q1','Q2','Q3','Q4','Q5'
+    'Q0','Q1','Q2','Q3','Q4'
 ];
