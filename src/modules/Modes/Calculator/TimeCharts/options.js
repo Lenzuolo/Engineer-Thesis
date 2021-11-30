@@ -50,15 +50,24 @@ export const options =
         },
         grid:
         {
-            show: false,
+            show: true,
+            xaxis: {
+                lines:{
+                show:true,
+                }
+            },
+            yaxis: {
+                lines:{
+                show:false,
+                }
+            }
         },
         stroke: {
           curve: 'stepline',
         },
         xaxis: {
-            tickAmount: 'dataPoints',
             type: 'numeric',
-            tickPlacement: 'between',
+            tickPlacement: 'on',
             labels: {
                 show: false,
             },

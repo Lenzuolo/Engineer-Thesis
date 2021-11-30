@@ -6,6 +6,7 @@ const defaultState = () =>(
     inArrays: [],
     outArrays: [],
     arrayChanged: false,
+    length: 0,
 });
 
 const SignalContext = React.createContext(defaultState());
@@ -107,7 +108,9 @@ const SignalContextProvider = ({children}) =>
                 return false;
             }
         const signalArray = [...state.inArrays,...state.outArrays];
+        console.log(signalArray);
         const length = findMaxLength(signalArray);
+        setState({...state,length:length});
         if(length === 0){
             return false;
         }

@@ -6,24 +6,35 @@ import './ConnectionOrderTable.css';
 
 const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
 {
-    const {inArrays,outArrays} = useContext(SignalContext);
+    const {inArrays,outArrays,length} = useContext(SignalContext);
     const [mappedCols,setMappedCols] = useState([]);
     const [mappedRows,setMappedRows] = useState([]);
-    const [changesArray,setChangesArray] = useState([]);
+    const [NSU, setNSU] = useState([]);
+    const [dependenciesArray,setDependenciesArray] = useState([]);
     const [tacts,setTacts] = useState(0);
 
     useEffect(()=>
     {
-        const {tacts,changes} = TableService.calculateTacts([...inArrays,...outArrays]);
+        const {tacts,dependencies} = TableService.calculateTacts(inArrays,outArrays,length);
         setTacts(tacts);
-        setChangesArray(changes);
+        setDependenciesArray(dependencies);
         generateColumns();
         generateRows();
+        generateNSU();
     },[tacts]);
     
     const generateNSU = () =>
     {
-
+        const signals = [...inArrays,...outArrays];
+        if(dependenciesArray.length != 0)
+        {
+            const nsuArray  = TableService.calculateNSU(dependenciesArray,signals,tacts);
+            console.log(nsuArray);
+            const mappedNsu = nsuArray.map(n=>
+                (<td key={n.tact}><b>{n.NSU}</b></td>)
+            );
+            setNSU(mappedNsu);
+        }
     }
 
     const generateColumns = () =>
@@ -44,30 +55,32 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
     const generateData = (label) =>
     {
         let data = [(<td key='start'><b>-</b></td>)];
-        const obj = changesArray.find(a=>a.label === label);
-        let row;
-
-        if(obj)
+        const array = [];
+        dependenciesArray.forEach(da =>{
+            if(da.label === label){
+                array.push({tact:da.tact,type:da.type});
+            }
+        })
+        
+        if(array.length != 0)
         {
-            row = obj.signalChange;
+            for(let i = 1;i<tacts;i++)
+            {
+                const change = array.find(a=> a.tact === i);
+                if(change){
+                    if(change.type === 'rising'){
+                        data.push((<td key={i}><b>+</b></td>));
+                    }
+                    else if(change.type === 'falling'){
+                        data.push((<td key={i}><b>-</b></td>));
+                    }
+                }
+                else{
+                    data.push((<td key={i}><b></b></td>));
+                }
+            }
         }
         else return;
-
-        for(let i = 1;i<tacts;i++)
-        {
-            if(row.rising.includes(i))
-            {
-                data.push(<td key={i}><b>+</b></td>);
-            }
-            else if(row.falling.includes(i))
-            {
-                data.push(<td key={i}><b>-</b></td>);
-            }
-            else
-            {
-                data.push(<td key={i}></td>);
-            }
-        }
         
         return data;
     }
@@ -121,7 +134,7 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
 
 
     return (
-        <table style={{width:'40%'}}>
+        <table style={{width:'60%'}}>
             <thead>
             <tr>
                 <th colSpan={4} style={{width: '30%'}}>Takty</th>
@@ -134,7 +147,8 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
             <tfoot>
                 <tr>
                     <th colSpan={4}>NSU</th>
-                    <td>0</td>
+                    <td key={0}><b>0</b></td>
+                    {NSU}
                 </tr>
             </tfoot>
         </table>

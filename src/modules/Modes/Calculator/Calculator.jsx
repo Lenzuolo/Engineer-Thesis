@@ -100,7 +100,7 @@ const Calculator = () =>
                             Powrót
                         </Button>
                         <Button type='primary' onClick={()=>{
-                            if(areSignalsCorrect(signalsIn,signalsIn)){
+                            if(areSignalsCorrect(signalsIn,signalsOut)){
                                 setStep(3);
                             }
                             else{

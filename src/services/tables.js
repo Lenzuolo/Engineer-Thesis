@@ -14,38 +14,69 @@ function edgeDetector(arg1,arg2)
 
 class TableService
 {
-    static calculateTacts(signalArray)
+    static calculateTacts(inArray,outArray,length)
     {
-        let changesArray = [];
-        signalArray.forEach(sig=>{
-            let signalChange = {rising: [],falling: []};
-            for(let i = 0; i < sig.data.length - 1; i++)
-            {
-                const {detected,type} = edgeDetector(sig.data[i],sig.data[i+1]);
-                if(detected)
-                {
-                    if(type==='rising'){
-                        signalChange.rising.push(i);
+        let tact = 1;
+        let dependencyArray = [];
+
+        for(let i = 0; i < length-1; i++)
+        {
+            let signalIn = {label: '', type: ''};
+            let signalOut = {label: '',type: ''};
+            for(let j = 0; j<inArray.length;j++){
+                const data = inArray[j].data;
+                const { detected, type } = edgeDetector(data[i],data[i+1]);
+                if(detected){
+                    signalIn = {label: inArray[j].label, type: type};
+                    break;
+                }
+            }
+            if(signalIn.label !== ''){
+                for(let j = 0; j < outArray.length;j++){
+                    const data = outArray[j].data;
+                    const { detected, type } = edgeDetector(data[i],data[i+1]);
+                    if(detected){
+                        signalOut = {label: outArray[j].label, type: type};
+                        break;
                     }
-                    else if(type==='falling')
+                }
+                dependencyArray.push({tact: tact,label: signalIn.label, type:signalIn.type});
+                if(signalOut.label !== ''){
+                    dependencyArray.push({tact: tact+1, label: signalOut.label, type: signalOut.type});
+                    tact+=2;
+                }
+                else{
+                    tact++;
+                }
+            }
+        }
+
+        return {tacts: tact, dependencies: dependencyArray}
+
+
+    }
+    static calculateNSU(dependencies,signals){
+        let nsuArray = [];
+        let NSU = 0;
+        for(let i = 0; i < dependencies.length; i++){
+            console.log(dependencies[i]);
+            for(let j = 0; j < signals.length;j++){
+                if(signals[j].label === dependencies[i].label){
+                    if(dependencies[i].type === 'rising')
                     {
-                        signalChange.falling.push(i);
+                        NSU += Math.pow(2,j);
+                        break;
+                    }
+                    else if(dependencies[i].type === 'falling')
+                    {
+                        NSU -= Math.pow(2,j);
+                        break;
                     }
                 }
             }
-            changesArray.push({label:sig.label,signalChange});
-        });
-        
-        let tacts = 0;
-        changesArray.forEach(c=>{
-            tacts += c.signalChange.rising.length + c.signalChange.falling.length;
-        });
-
-        return {tacts:tacts,changes:changesArray};
-    }
-    static calculateNSU(changes,tact)
-    {
-        
+            nsuArray.push({tact: dependencies[i].tact, NSU: NSU});
+        }
+        return nsuArray;
     }
 }
 

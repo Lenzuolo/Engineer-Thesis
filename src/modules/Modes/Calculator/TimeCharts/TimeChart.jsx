@@ -11,8 +11,8 @@ const TimeChart = ({label,sigType}) =>
 {
 
     const {inArrays,outArrays, addArray, updateArray, arrayChanged } = useContext(SignalContext);
-    const [data,setData] = useState([]);
-    const [xVal,setXVal] = useState(0);
+    const [data,setData] = useState([{x:0,y:0},{x:1,y:0}]);
+    const [xVal,setXVal] = useState(2);
     const [series,setSeries] = useState([{name:'',data: data}]);
     const [maxTicks,setMaxTicks] = useState(10);
 
@@ -24,7 +24,8 @@ const TimeChart = ({label,sigType}) =>
         updateSignals();
         if(xVal > 10)
         {
-            setMaxTicks(xVal);
+            const ratio = parseInt(xVal/10);
+            setMaxTicks(10 * ratio + 10);
         }
     },[xVal,arrayChanged]);
 
@@ -66,7 +67,7 @@ const TimeChart = ({label,sigType}) =>
     const onUpButtonClick = () =>
     {
         const newData = [...data];
-        if(newData.length === 0)
+        if(newData.length === 2)
         {
             addArray({data,label,sigType});
         }
@@ -89,7 +90,7 @@ const TimeChart = ({label,sigType}) =>
     const onDownButtonClick = () =>
     {
         const newData = [...data];
-        if(newData.length === 0)
+        if(newData.length === 2)
         {
             addArray({data,label,sigType});
         }
@@ -111,21 +112,24 @@ const TimeChart = ({label,sigType}) =>
 
     const onClearButtonClick = () =>
     {
-        const empty = [];
-        setData([]);
-        updateArray({data: empty,label,sigType});
+        setData([{x:0,y:0},{x:1,y:0}]);
+        updateArray({data: [{x:0,y:0},{x:1,y:0}],label,sigType});
         setXVal(0);
-        setSeries([{data: empty}]);
+        setSeries([{data: [{x:0,y:0},{x:1,y:0}]}]);
+        setMaxTicks(10);
     }
 
     const onUndoButtonClick = () =>
     {
-        if(data.length > 0)
+        if(data.length > 2)
         {
             const newData = [...data];
             newData.pop();
             updateArray({data: newData,label,sigType});
             setXVal(xVal-1);
+            if(xVal < 10){
+                setMaxTicks(10);
+            }
             setSeries([{data: data}]);
             setData(newData);
         }

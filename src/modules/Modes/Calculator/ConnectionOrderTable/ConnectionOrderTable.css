@@ -5,3 +5,7 @@ td {
   box-shadow: 0 0 1px 1px black;
   border-collapse: collapse;
 }
+
+td{
+  width: 3px;
+}
