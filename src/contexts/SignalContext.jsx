@@ -108,7 +108,6 @@ const SignalContextProvider = ({children}) =>
                 return false;
             }
         const signalArray = [...state.inArrays,...state.outArrays];
-        console.log(signalArray);
         const length = findMaxLength(signalArray);
         setState({...state,length:length});
         if(length === 0){

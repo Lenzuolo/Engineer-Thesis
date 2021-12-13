@@ -1,12 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { SignalContext } from '../../../../contexts';
+import { SignalContext, TableContext } from '../../../../contexts';
 import { TableService } from '../../../../services';
+import { Statistics } from './Statistics';
 import './ConnectionOrderTable.css';
 
 
 const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
 {
     const {inArrays,outArrays,length} = useContext(SignalContext);
+    const {checkSolvable} = useContext(TableContext);
     const [mappedCols,setMappedCols] = useState([]);
     const [mappedRows,setMappedRows] = useState([]);
     const [NSU, setNSU] = useState([]);
@@ -28,12 +30,16 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
         const signals = [...inArrays,...outArrays];
         if(dependenciesArray.length != 0)
         {
-            const nsuArray  = TableService.calculateNSU(dependenciesArray,signals,tacts);
-            console.log(nsuArray);
+            const nsuArray  = TableService.calculateNSU(dependenciesArray,signals);
             const mappedNsu = nsuArray.map(n=>
                 (<td key={n.tact}><b>{n.NSU}</b></td>)
             );
+            if(dependenciesArray[length-1].type==='falling'){
+                mappedNsu.pop();
+            }
             setNSU(mappedNsu);
+
+            checkSolvable({dependencyArray:dependenciesArray,nsuArray});
         }
     }
 
@@ -134,7 +140,8 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
 
 
     return (
-        <table style={{width:'60%'}}>
+        <>
+        <table style={{width:'60%',marginBottom: 20}}>
             <thead>
             <tr>
                 <th colSpan={4} style={{width: '30%'}}>Takty</th>
@@ -152,6 +159,8 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
                 </tr>
             </tfoot>
         </table>
+        <Statistics initial={false}/>
+        </>
     );
 }
 

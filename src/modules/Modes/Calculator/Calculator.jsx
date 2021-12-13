@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Form,InputNumber,Button,Card} from 'antd';
 import { LABELS_IN, LABELS_OUT } from '../../../utils';
 import { ConnectionOrderTable } from './ConnectionOrderTable';
-import { SignalContext } from '../../../contexts';
+import { SignalContext, TableContext } from '../../../contexts';
 import { TimeChart } from './TimeCharts';
-import { displayNotification } from '../../../components';
+import { CustomText, displayNotification } from '../../../components';
 import './Calculator.css';
+
 
 const Calculator = () =>
 {
@@ -17,6 +18,7 @@ const Calculator = () =>
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
     const {clearSignalContext,areSignalsCorrect} = React.useContext(SignalContext);
+    const {solvable} = useContext(TableContext);
 
     const onFinish = ({sigIn,sigOut}) =>
     {
@@ -114,7 +116,33 @@ const Calculator = () =>
                 </div>
             )}
             {step === 3 && (
-                <ConnectionOrderTable signalsIn={signalsIn} signalsOut={signalsOut}/>
+                <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center'}}>
+                    <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center',padding: 10}}>
+                        <CustomText strong size={18} style={{marginBottom:20}} >Na podstawie podanych sygnałów wygenerowano poniższą TKŁ:</CustomText>
+                        <ConnectionOrderTable signalsIn={signalsIn} signalsOut={signalsOut}/>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'center', padding: 20}}>
+                        <div style={{display:'flex',justifyContent:'space-between',minWidth: 250}}>
+                        <Button type='primary' onClick={()=>{
+                            setStep(2);
+                        }}>
+                            Powrót
+                        </Button>
+                    {solvable ? 
+                        <Button type='primary' onClick={()=>{
+                            setStep(1);
+                            clearSignalContext();
+                        }}>
+                            Powrót na początek
+                        </Button> :
+                        <Button type='primary' onClick={()=>{
+                            setStep(4);
+                        }}>
+                            Rozwiąż TKŁ
+                        </Button>}
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     )

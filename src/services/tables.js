@@ -51,7 +51,12 @@ class TableService
             }
         }
 
-        return {tacts: tact, dependencies: dependencyArray}
+        /*if(dependencyArray[dependencyArray.length-1].type ==='falling'){
+            dependencyArray.pop();
+            tact--;
+        }*/
+
+        return {tacts: tact-1, dependencies: dependencyArray}
 
 
     }
@@ -59,7 +64,6 @@ class TableService
         let nsuArray = [];
         let NSU = 0;
         for(let i = 0; i < dependencies.length; i++){
-            console.log(dependencies[i]);
             for(let j = 0; j < signals.length;j++){
                 if(signals[j].label === dependencies[i].label){
                     if(dependencies[i].type === 'rising')
@@ -77,6 +81,36 @@ class TableService
             nsuArray.push({tact: dependencies[i].tact, NSU: NSU});
         }
         return nsuArray;
+    }
+
+    static calculateConditions(label,dependencyArray,nsuArray){
+        
+        let shiftedNsu = [...nsuArray];
+        shiftedNsu.unshift({tact: 0, NSU: 0});
+        let workingConditions = [];
+        let notWorkingConditions = [...shiftedNsu];
+        let start = null,end = null;
+
+        for(let i = 0; i < dependencyArray.length; i++){
+            if(label === dependencyArray[i].label){
+                if(dependencyArray[i].type === 'rising'){
+                    start = dependencyArray[i].tact - 1;
+                }
+                else if(dependencyArray[i].type === 'falling'){
+                    end = dependencyArray[i].tact - 1;
+                }
+                if(start !== null && end !== null){
+                    let sliced = shiftedNsu.slice(start,end);
+                    workingConditions = workingConditions.concat(sliced);
+                    start = null;
+                    end = null;
+                }
+            }
+        }
+
+        notWorkingConditions = notWorkingConditions.filter(nwc => !workingConditions.includes(nwc));
+
+        return { workingConditions: workingConditions, notWorkingConditions: notWorkingConditions, label: label};
     }
 }
 
