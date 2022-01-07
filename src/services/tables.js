@@ -12,7 +12,7 @@ function edgeDetector(arg1,arg2)
 }
 
 function isNotConflictingState(borderTact,state,notConfArray){
-    const existingState = notConfArray.find(s => s.value === state.value);
+    const existingState = notConfArray.find(s => s.value === state.NSU);
     if(typeof existingState !== 'undefined'){
         const tacts = existingState.tacts;
         for(let i = 0; i < tacts.length; i++){
@@ -27,8 +27,8 @@ function isNotConflictingState(borderTact,state,notConfArray){
 function isAnotherConflict(state,confArray){
     let existingStates = [];
     confArray.forEach(c =>{
-        if(c.value === state.value){
-            if(c.tacts.some(t=> t > state.tact)){
+        if(c.value === state.NSU){
+            if(c.tacts.some(t=> t === state.tact)){
                 existingStates.push(c);
             }
         }
@@ -38,6 +38,16 @@ function isAnotherConflict(state,confArray){
     
 }
 
+function isStateInPart(tact,part)
+{
+    for(let i = 0; i<part.length;i++)
+    {
+        if(part[i].tact === tact)
+        {
+            return true;
+        }
+    }
+}
 
 class TableService
 {
@@ -88,7 +98,7 @@ class TableService
 
     }
     static calculateNSU(dependencies,signals){
-        let nsuArray = [];
+        let nsuArray = [{tact:0,NSU:0}];
         let NSU = 0;
         for(let i = 0; i < dependencies.length; i++){
             for(let j = 0; j < signals.length;j++){
@@ -107,13 +117,18 @@ class TableService
             }
             nsuArray.push({tact: dependencies[i].tact, NSU: NSU});
         }
+
+        if(dependencies[dependencies.length-1].type==='falling'){
+            nsuArray.pop();
+        }
+
         return nsuArray;
     }
 
     static calculateConditions(label,dependencyArray,nsuArray){
         
         let shiftedNsu = [...nsuArray];
-        shiftedNsu.unshift({tact: 0, NSU: 0});
+        //shiftedNsu.unshift({tact: 0, NSU: 0});
         let workingConditions = [];
         let notWorkingConditions = [...shiftedNsu];
         let start = null,end = null;
@@ -143,23 +158,90 @@ class TableService
     static solveTable(nsuArray,conflictingStates,notConflictingStates){
         
         let solved = false;
+        let endOfCycle = false;
+        let reduction = false;
         let prevTact = 0;
         let index = 0;
         let offset = 1;
         let borders = [];
         let arr = [...conflictingStates];
-        let stack = [{arr:[...nsuArray],checked:false}];
+        let stack = [[...nsuArray]];
         while(!solved){
-            let state = arr[index];
-            let tact = state.tacts[1]-offset
-            let nsuVal = nsuArray.find(n=>n.tact === tact);
-            if(!isNotConflictingState(prevTact,nsuVal,notConflictingStates) && !isAnotherConflict(nsuVal,conflictingStates)){
-                borders.push(tact);
-                prevTact = tact;
-                offset = 1;
+            
+            if(reduction)
+            {
+                let toReduce = [];
+                stack.forEach(p=>{
+                    if(p.some(s=>s.tact === borders[0] || s.tact === borders[0]+1))
+                    {
+                        toReduce = toReduce.concat(p);
+                    }
+                });
+
+                let reducable = true;
+
+                for(let i = 0; i < conflictingStates.length;i++)
+                {
+                    if(isStateInPart(conflictingStates[i].tacts[0],toReduce) && 
+                    isStateInPart(conflictingStates[i].tacts[1],toReduce))
+                    {
+                        reducable = false;
+                        break;
+                    }
+                }
+
+                if(reducable)
+                {
+                    //TODO: Redukcja granic
+                }
+                solved = true;
+
             }
-            else{
-                offset++;
+            else
+            {
+                let state = arr[index];
+                let currentPart = stack[stack.length-1];
+                if(!isStateInPart(state.tacts[0],currentPart))
+                {
+                    index++;
+                    if(index >= conflictingStates.length && 
+                        currentPart[currentPart.length-1].tact === nsuArray[nsuArray.length-1].tact)
+                        {
+                            endOfCycle = true;
+                            const merged = currentPart.concat([...stack[0]]);
+                            stack.shift();
+                            stack.push(merged);
+                        }
+                }
+                else
+                {
+                    let tact = state.tacts[1]-offset
+                    let nsuVal = currentPart.find(n=>n.tact === tact);
+                    if(!isNotConflictingState(prevTact,nsuVal,notConflictingStates) && !isAnotherConflict(nsuVal,conflictingStates)){
+                        borders.push(tact);
+                        offset = 1;
+                        const firstPart = currentPart.slice(0, currentPart.indexOf(nsuVal)+1)
+                        const secondPart = currentPart.slice(currentPart.indexOf(nsuVal)+1);
+                        stack.pop();
+                        stack.push(firstPart);
+                        stack.push(secondPart);
+                        if(endOfCycle){
+                            // eslint-disable-next-line no-debugger
+                            debugger
+                            reduction = true;
+                            endOfCycle = false;
+                        }
+                        prevTact = tact;
+                        index = 0;
+                    }
+                    else{
+                        offset++;
+                    }
+                }
+
+                if(index >= conflictingStates.length){
+                    index = 0;
+                }
             }
         }
     }

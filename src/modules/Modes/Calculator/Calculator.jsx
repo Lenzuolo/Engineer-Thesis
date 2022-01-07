@@ -18,7 +18,7 @@ const Calculator = () =>
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
     const {clearSignalContext,areSignalsCorrect,addArray} = React.useContext(SignalContext);
-    const {checkSolvable,calculateTableValues,solvable} = useContext(TableContext);
+    const {checkSolvable,calculateTableValues,solvable,solveTable} = useContext(TableContext);
 
     const onFinish = ({sigIn,sigOut}) =>
     {
@@ -142,6 +142,7 @@ const Calculator = () =>
                             Powrót na początek
                         </Button> :
                         <Button type='primary' onClick={()=>{
+                            solveTable();
                             setStep(4);
                         }}>
                             Rozwiąż TKŁ

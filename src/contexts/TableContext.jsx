@@ -109,6 +109,9 @@ const TableContextProvider = ({children}) => {
             isSolvable = true;
         }
 
+        console.log(conflictingStates);
+        console.log(notConflictingStates);
+
         setState((prev=>{
             const newState = {...prev}
             newState.solvable = isSolvable; 
@@ -120,7 +123,7 @@ const TableContextProvider = ({children}) => {
     }
 
     const solveTable = () => {
-
+        TableService.solveTable(state.nsuArray,state.conflictingStates,state.notConflictingStates);
     }
 
     return (

@@ -22,13 +22,9 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
     {
         if(dependencyArray.length != 0)
         {
-            console.log(nsuArray);
             const mappedNsu = nsuArray.map(n=>
                 (<td key={n.tact}><b>{n.NSU}</b></td>)
             );
-            if(dependencyArray[dependencyArray.length-1].type==='falling'){
-                mappedNsu.pop();
-            }
             setNSU(mappedNsu);
         }
     }
@@ -144,7 +140,6 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
             <tfoot>
                 <tr>
                     <th colSpan={4}>NSU</th>
-                    <td key={0}><b>0</b></td>
                     {NSU}
                 </tr>
             </tfoot>
