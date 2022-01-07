@@ -16,9 +16,13 @@ const TimeChart = ({label,sigType}) =>
     const [series,setSeries] = useState([{name:'',data: data}]);
     const [maxTicks,setMaxTicks] = useState(10);
 
+    // if(data.length === 2)
+    // {
+    //     addArray({data,label,sigType});
+    // }
 
     const chartOptions = {...options,yaxis: {...options.yaxis,title:{text:label}},
-            xaxis: {...options.xaxis,max:maxTicks}};
+            xaxis: {...options.xaxis,max:maxTicks,tickAmount:maxTicks}};
 
     useEffect(()=>{
         updateSignals();
@@ -67,10 +71,6 @@ const TimeChart = ({label,sigType}) =>
     const onUpButtonClick = () =>
     {
         const newData = [...data];
-        if(newData.length === 2)
-        {
-            addArray({data,label,sigType});
-        }
 
         newData.push({x: xVal, y: 1});
 
@@ -90,10 +90,6 @@ const TimeChart = ({label,sigType}) =>
     const onDownButtonClick = () =>
     {
         const newData = [...data];
-        if(newData.length === 2)
-        {
-            addArray({data,label,sigType});
-        }
 
         newData.push({x: xVal, y: 0});
 
@@ -137,10 +133,10 @@ const TimeChart = ({label,sigType}) =>
 
     return (
         <Card bordered={false} className='card' style={{ maxHeight:120,boxShadow:'none',alignItems:'stretch',padding:'5 0',width:'100%'}}> 
-            <div style={{display:'flex',flex: '0 0 70%',alignItems:'center'}}>
-                <Chart series={series} options={chartOptions} height={115} width={400} type='line'/>
+            <div style={{display:'flex',flex: '0 0 40%',alignItems:'center'}}>
+                <Chart series={series} options={chartOptions} height={115} width={320} type='line'/>
             </div>
-            <div style={{flex: '0 0 30%',display:'flex',flexDirection:'column',alignItems:'center',maxHeight: 90}}>
+            <div style={{flex: '0 0 10%',display:'flex',flexDirection:'column',alignItems:'center',maxHeight: 90}}>
                 <Button icon={<ArrowUpOutlined/>} onClick={onUpButtonClick}/>
                 <Button icon={<ArrowDownOutlined/>} onClick={onDownButtonClick}/>
                 <Button icon={<CloseOutlined/>} onClick={onClearButtonClick}/>

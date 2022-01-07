@@ -34,7 +34,7 @@ const SignalContextProvider = ({children}) =>
         if(signalArrayString === null)
         {
             const newArr = [{data: data, label: label}];
-            const newState = {...state,[arrName]:newArr,arrayChanged:!state.arrayChanged};
+            const newState = {...state,[arrName]:newArr};
             setState(newState);
             localStorage.setItem(arrName,JSON.stringify(newArr));
             return;
@@ -47,7 +47,7 @@ const SignalContextProvider = ({children}) =>
         }
         signalArray.push({data: data, label: label});
         localStorage.setItem(arrName,JSON.stringify(signalArray));
-        const newState = {...state,[arrName]:signalArray,arrayChanged:!state.arrayChanged};
+        const newState = {...state,[arrName]:signalArray};
         setState(newState);
         return;
     },[state]);
@@ -113,7 +113,7 @@ const SignalContextProvider = ({children}) =>
         if(length === 0){
             return false;
         }
-        return signalArray.every(arr=> arr.data.length === length);
+        return {correct:signalArray.every(arr=> arr.data.length === length),length:length};
     },[state]);
 
     return (

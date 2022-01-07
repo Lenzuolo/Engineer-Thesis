@@ -1,12 +1,11 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { SignalContext, TableContext } from '../../../../../contexts';
 import { CustomText } from '../../../../../components';
-import { useState } from 'react/cjs/react.development';
 import { uniqNSU } from '../../../../../utils';
 
 const Statistics = ({initial}) =>{
     
-    const {solvable,conditionsArray,conflictingStates} = useContext(TableContext);
+    const {solvable,conditionsArray,conflictingStates,notConflictingStates} = useContext(TableContext);
     const {inArrays, outArrays} = useContext(SignalContext);
     const [mappedWorkingConditions, setMappedWorkingConditions] = useState([]);
     const [mappedNotWorkingConditions, setMappedNotWorkingConditions] = useState([]);
@@ -28,7 +27,6 @@ const Statistics = ({initial}) =>{
 
         conditionsArray.forEach(c =>{
             let uniqWC = uniqNSU(c.workingConditions);
-            console.log(uniqWC);
             mapWorkCond.push((
                 <CustomText strong size={16}>
                     {`Warunki działania dla ${c.label}: ∑(${uniqWC.toString()})`}
@@ -38,13 +36,16 @@ const Statistics = ({initial}) =>{
             let uniqNWC = uniqNSU(c.notWorkingConditions);
             mapNotWorkCond.push((
                 <CustomText strong size={16}>
-                    {`Warunki nie działania dla ${c.label}: ∏(${uniqNWC.toString()})`}
+                    {`Warunki niedziałania dla ${c.label}: ∏(${uniqNWC.toString()})`}
                     <sub>{signals.join('')}</sub> 
                 </CustomText>
             ));
         });
 
         mapConfStates.push((<CustomText key='state' strong size={16}>Znaleziono stany sprzeczne:</CustomText>))
+        
+        console.log(notConflictingStates);
+
         mapConfStates.push(conflictingStates.map(c=>(
            <CustomText key={c.value} strong size={16}>{`Stan ${c.value} w taktach ${c.tacts.toString()} dla ${c.label}`}</CustomText> 
         )));

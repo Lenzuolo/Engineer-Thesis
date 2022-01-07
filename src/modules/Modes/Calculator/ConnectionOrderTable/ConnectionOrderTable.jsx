@@ -1,45 +1,35 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { SignalContext, TableContext } from '../../../../contexts';
-import { TableService } from '../../../../services';
+import { TableContext } from '../../../../contexts';
 import { Statistics } from './Statistics';
 import './ConnectionOrderTable.css';
 
 
 const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
 {
-    const {inArrays,outArrays,length} = useContext(SignalContext);
-    const {checkSolvable} = useContext(TableContext);
+    const {nsuArray,tacts,dependencyArray} = useContext(TableContext);
     const [mappedCols,setMappedCols] = useState([]);
     const [mappedRows,setMappedRows] = useState([]);
     const [NSU, setNSU] = useState([]);
-    const [dependenciesArray,setDependenciesArray] = useState([]);
-    const [tacts,setTacts] = useState(0);
 
     useEffect(()=>
     {
-        const {tacts,dependencies} = TableService.calculateTacts(inArrays,outArrays,length);
-        setTacts(tacts);
-        setDependenciesArray(dependencies);
         generateColumns();
         generateRows();
         generateNSU();
     },[tacts]);
     
-    const generateNSU = () =>
+    const generateNSU = async() =>
     {
-        const signals = [...inArrays,...outArrays];
-        if(dependenciesArray.length != 0)
+        if(dependencyArray.length != 0)
         {
-            const nsuArray  = TableService.calculateNSU(dependenciesArray,signals);
+            console.log(nsuArray);
             const mappedNsu = nsuArray.map(n=>
                 (<td key={n.tact}><b>{n.NSU}</b></td>)
             );
-            if(dependenciesArray[length-1].type==='falling'){
+            if(dependencyArray[dependencyArray.length-1].type==='falling'){
                 mappedNsu.pop();
             }
             setNSU(mappedNsu);
-
-            checkSolvable({dependencyArray:dependenciesArray,nsuArray});
         }
     }
 
@@ -62,7 +52,7 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
     {
         let data = [(<td key='start'><b>-</b></td>)];
         const array = [];
-        dependenciesArray.forEach(da =>{
+        dependencyArray.forEach(da =>{
             if(da.label === label){
                 array.push({tact:da.tact,type:da.type});
             }

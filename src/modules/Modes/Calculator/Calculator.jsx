@@ -17,8 +17,8 @@ const Calculator = () =>
     const [labelsOut,setLabelsOut] = useState([]);
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
-    const {clearSignalContext,areSignalsCorrect} = React.useContext(SignalContext);
-    const {solvable} = useContext(TableContext);
+    const {clearSignalContext,areSignalsCorrect,addArray} = React.useContext(SignalContext);
+    const {checkSolvable,calculateTableValues,solvable} = useContext(TableContext);
 
     const onFinish = ({sigIn,sigOut}) =>
     {
@@ -35,17 +35,20 @@ const Calculator = () =>
         }
         setStep(2);
 
+        clearSignalContext();
+
         setMappedLabelsIn(labelsIn.map(li=>
-            (
-                <TimeChart key={li} label={li} sigType='in'/>
-            )));
+            {
+                addArray({data:[{x:0,y:0},{x:1,y:0}],label:li,sigType:'in'});
+                return <TimeChart key={li} label={li} sigType='in'/>
+        }));
 
         setMappedLabelsOut(labelsOut.map(lo=>
-            (
-                <TimeChart key={lo} label={lo} sigType='out'/>
-        )));
+            {
+                addArray({data:[{x:0,y:0},{x:1,y:0}],label:lo,sigType:'out'});
+                return <TimeChart key={lo} label={lo} sigType='out'/>
+            }));
 
-        clearSignalContext();
     }
 
     return (
@@ -80,12 +83,12 @@ const Calculator = () =>
             {step === 2 && (
                 <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'stretch'}}>
                     <div style={{display:'flex',justifyContent:'space-evenly'}}>
-                        <Card title='Sygnały Wejściowe' className='signalCard' bordered={false} style={{width: '35%'}}>
+                        <Card title='Sygnały Wejściowe' className='signalCard' bordered={false} style={{width: '40%'}}>
                             {
                                 mappedLabelsIn
                             }
                         </Card>
-                        <Card title='Sygnały Wyjściowe' className='signalCard' bordered={false} style={{width: '35%'}}>
+                        <Card title='Sygnały Wyjściowe' className='signalCard' bordered={false} style={{width: '40%'}}>
                             {
                                 mappedLabelsOut
                             }
@@ -102,7 +105,10 @@ const Calculator = () =>
                             Powrót
                         </Button>
                         <Button type='primary' onClick={()=>{
-                            if(areSignalsCorrect(signalsIn,signalsOut)){
+                            const {correct,length} = areSignalsCorrect(signalsIn,signalsOut)
+                            if(correct){
+                                const {dependencies,nsuArray} = calculateTableValues(length);
+                                checkSolvable({dependencyArray:dependencies,nsuArray});
                                 setStep(3);
                             }
                             else{
