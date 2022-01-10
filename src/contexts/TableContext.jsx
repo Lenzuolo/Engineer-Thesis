@@ -1,6 +1,7 @@
-import React, { useCallback, useContext, useState} from 'react';
+import React, { useContext, useState} from 'react';
 import { SignalContext } from '.';
 import { TableService } from '../services';
+import { STATUS } from '../utils';
 
 const defaultState = () =>(
 {
@@ -11,6 +12,8 @@ const defaultState = () =>(
     nsuArray: [],
     dependencyArray: [],
     tacts: 0,
+    calculationStatus: STATUS.IDLE,
+    additionalSignals: 0, 
 });
 
 const TableContext = React.createContext(defaultState());
@@ -37,13 +40,15 @@ const TableContextProvider = ({children}) => {
         return {dependencies,nsuArray};
     }
 
-    const checkSolvable = ({dependencyArray,nsuArray}) =>{
+    const checkSolvable = ({dependencyArray,nsuArray},additionalSignals) =>{
         
         let conditionsArray = []
         let conflictingStates = []
         let notConflictingStates = [];
 
-        outArrays.forEach(arr=>{
+        let outSignals = [...outArrays,...additionalSignals ?? []];
+
+        outSignals.forEach(arr=>{
             conditionsArray.push(TableService.calculateConditions(arr.label,dependencyArray,nsuArray));
         });
 
@@ -54,12 +59,14 @@ const TableContextProvider = ({children}) => {
                         conflictingStates.push({
                             label: c.label,
                             value: c.workingConditions[i].NSU, 
-                            tacts: [c.workingConditions[i].tact,c.notWorkingConditions[j].tact]
+                            tacts: [c.workingConditions[i].tact,c.notWorkingConditions[j].tact].sort((a,b)=>a-b)
                         });
                     }
                 }
             }
         });
+
+        conflictingStates.sort((a,b)=> a.tacts[0]-b.tacts[0]);
 
         conditionsArray.forEach(c =>{
             for( let i = 0; i < c.workingConditions.length;i++){
@@ -71,13 +78,15 @@ const TableContextProvider = ({children}) => {
                 }
                 if(tacts.length > 1)
                 {
-                    if(!notConflictingStates.some(s=> s.value === c.WorkingConditions[i].NSU))
-                    notConflictingStates.push({
-                        label: c.label,
-                        value: c.workingConditions[i].NSU,
-                        working: true,
-                        tacts
-                    });
+                    if(!notConflictingStates.some(s=> s.value === c.workingConditions[i].NSU))
+                    {
+                        notConflictingStates.push({
+                            label: c.label,
+                            value: c.workingConditions[i].NSU,
+                            working: true,
+                            tacts
+                        });
+                    }
                 }
             }
 
@@ -109,8 +118,6 @@ const TableContextProvider = ({children}) => {
             isSolvable = true;
         }
 
-        console.log(conflictingStates);
-        console.log(notConflictingStates);
 
         setState((prev=>{
             const newState = {...prev}
@@ -123,11 +130,35 @@ const TableContextProvider = ({children}) => {
     }
 
     const solveTable = () => {
-        TableService.solveTable(state.nsuArray,state.conflictingStates,state.notConflictingStates);
+        setState((prev=>{
+            const newState = {...prev}
+            newState.calculationStatus = STATUS.LOADING;
+            return newState;
+        }));
+        const {borders,stack} = TableService.findBorders(state.nsuArray,state.conflictingStates,state.notConflictingStates);
+        console.log(borders,stack);
+        const {dependencies,tacts,labels} = TableService.codeSignals(borders,stack,state.dependencyArray,
+            {conflictingStates:state.conflictingStates});
+        console.log(dependencies,labels);
+        const nsuArray = TableService.calculateNSU(dependencies,[...inArrays,...outArrays,...labels]);
+        checkSolvable({dependencyArray: dependencies,nsuArray:nsuArray},labels);
+        setState((prev=>{
+            const newState = {...prev}
+            newState.tacts = tacts;
+            newState.dependencyArray = dependencies;
+            newState.nsuArray = nsuArray;
+            newState.calculationStatus = STATUS.FINISHED;
+            newState.additionalSignals = labels.length;
+            return newState;
+        }));
+    }
+
+    const clearTableContext = () => {
+        setState(defaultState());
     }
 
     return (
-        <TableContext.Provider value={{...state,checkSolvable,calculateTableValues,solveTable}}>
+        <TableContext.Provider value={{...state,checkSolvable,calculateTableValues,solveTable,clearTableContext}}>
             {children}
         </TableContext.Provider>
     )

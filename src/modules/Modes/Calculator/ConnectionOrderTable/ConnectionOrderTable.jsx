@@ -4,9 +4,9 @@ import { Statistics } from './Statistics';
 import './ConnectionOrderTable.css';
 
 
-const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
+const ConnectionOrderTable = ({signalsIn,signalsOut,additionalSignals}) =>
 {
-    const {nsuArray,tacts,dependencyArray} = useContext(TableContext);
+    const {nsuArray,dependencyArray} = useContext(TableContext);
     const [mappedCols,setMappedCols] = useState([]);
     const [mappedRows,setMappedRows] = useState([]);
     const [NSU, setNSU] = useState([]);
@@ -16,7 +16,7 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
         generateColumns();
         generateRows();
         generateNSU();
-    },[tacts]);
+    },[dependencyArray]);
     
     const generateNSU = async() =>
     {
@@ -32,47 +32,46 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
     const generateColumns = () =>
     {
         let colTab = [];
-        for(let i = 0; i < tacts;i++)
-        {
-            colTab.push(i);
-        }
 
-        setMappedCols(colTab.map(c=>
-            (
-            <th key={c}>{c}</th>
-        )));
+        nsuArray.forEach(n=>{
+            if(Number.isInteger(n.tact))
+            {
+                colTab.push((<th key={n.tact}>{n.tact}</th>));
+            }
+            else
+            {
+                colTab.push((<th key={n.tact}>{`${Math.floor(n.tact)}'`}</th>));
+            }
+        })
+        setMappedCols(colTab);
 
     }
 
     const generateData = (label) =>
     {
         let data = [(<td key='start'><b>-</b></td>)];
-        const array = [];
-        dependencyArray.forEach(da =>{
+        dependencyArray.forEach((da,i) =>{
             if(da.label === label){
-                array.push({tact:da.tact,type:da.type});
+                if(da.type === 'rising')
+                {
+                        data.push((<td key={da.tact}><b>+</b></td>));
+                }
+                else if(da.type === 'falling')
+                {
+                    if(i !== dependencyArray.length-1)
+                    {
+                        data.push((<td key={da.tact}><b>-</b></td>));
+                    }
+                }
+            }
+            else
+            {
+                if( i !== dependencyArray.length-1)
+                {
+                    data.push((<td key={da.tact}><b></b></td>));
+                }
             }
         })
-        
-        if(array.length != 0)
-        {
-            for(let i = 1;i<tacts;i++)
-            {
-                const change = array.find(a=> a.tact === i);
-                if(change){
-                    if(change.type === 'rising'){
-                        data.push((<td key={i}><b>+</b></td>));
-                    }
-                    else if(change.type === 'falling'){
-                        data.push((<td key={i}><b>-</b></td>));
-                    }
-                }
-                else{
-                    data.push((<td key={i}><b></b></td>));
-                }
-            }
-        }
-        else return;
         
         return data;
     }
@@ -86,7 +85,7 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
         rowTab.push(
             (
             <tr key={i}>
-                <th key='state' rowSpan={signalsIn+signalsOut} colSpan={2} style={{width:'15%'}}>Stan sygnałów</th>
+                <th key='state' rowSpan={signalsIn+signalsOut+(additionalSignals ?? 0)} colSpan={2} style={{width:'15%'}}>Stan sygnałów</th>
                 <th key='signal'>{`X${i}`}</th>
                 <th key='state value'>2<sup>{`${i}`}</sup></th>
                 {generateData(`X${i}`)}
@@ -120,6 +119,19 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
             )
         }
 
+        for(let j = 0; j < (additionalSignals ?? 0);j++,i++)
+        {
+            rowTab.push(
+                (
+                    <tr key={i}>
+                        <th key='signal'>{`Z${j}`}</th>
+                        <th key='state value'>2<sup>{`${i}`}</sup></th>
+                        {generateData(`Z${j}`)}
+                    </tr>
+                )
+            )
+        }
+
         setMappedRows(rowTab);
     }
 
@@ -144,7 +156,7 @@ const ConnectionOrderTable = ({signalsIn,signalsOut}) =>
                 </tr>
             </tfoot>
         </table>
-        <Statistics initial={false}/>
+        <Statistics/>
         </>
     );
 }

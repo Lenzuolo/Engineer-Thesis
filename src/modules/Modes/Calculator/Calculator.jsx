@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
-import { Form,InputNumber,Button,Card} from 'antd';
-import { LABELS_IN, LABELS_OUT } from '../../../utils';
+import { Form,InputNumber,Button,Card,Spin} from 'antd';
+import { signalLabels, STATUS } from '../../../utils';
 import { ConnectionOrderTable } from './ConnectionOrderTable';
 import { SignalContext, TableContext } from '../../../contexts';
 import { TimeChart } from './TimeCharts';
@@ -13,26 +13,19 @@ const Calculator = () =>
     const [step,setStep] = useState(1);
     const [signalsIn,setSignalsIn] = useState(1);
     const [signalsOut,setSignalsOut] = useState(1);
-    const [labelsIn,setLabelsIn] = useState([]);
-    const [labelsOut,setLabelsOut] = useState([]);
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
     const {clearSignalContext,areSignalsCorrect,addArray} = React.useContext(SignalContext);
-    const {checkSolvable,calculateTableValues,solvable,solveTable} = useContext(TableContext);
+    const {checkSolvable,calculateTableValues,solvable,solveTable,calculationStatus,additionalSignals,clearTableContext} = useContext(TableContext);
 
     const onFinish = ({sigIn,sigOut}) =>
     {
         setSignalsIn(sigIn);
-        for(let i = 0; i < sigIn; i++)
-        {
-            labelsIn.push(LABELS_IN[i]);
-        }
+        const labelsIn = signalLabels('in',sigIn);
 
         setSignalsOut(sigOut);
-        for(let i = 0; i < sigOut; i++)
-        {
-            labelsOut.push(LABELS_OUT[i]);
-        }
+        const labelsOut = signalLabels('out',sigOut);
+        
         setStep(2);
 
         clearSignalContext();
@@ -98,8 +91,6 @@ const Calculator = () =>
                         <div style={{display:'flex',justifyContent:'space-between',minWidth: 250}}>
                         <Button type='primary' onClick={()=>{
                             setStep(1);
-                            setLabelsIn([]);
-                            setLabelsOut([]);
                             clearSignalContext();
                         }}>
                             Powrót
@@ -142,8 +133,8 @@ const Calculator = () =>
                             Powrót na początek
                         </Button> :
                         <Button type='primary' onClick={()=>{
-                            solveTable();
                             setStep(4);
+                            solveTable();
                         }}>
                             Rozwiąż TKŁ
                         </Button>}
@@ -151,6 +142,32 @@ const Calculator = () =>
                     </div>
                 </div>
             )}
+            {step === 4 && (
+                <>
+                <div>
+                    {(calculationStatus === STATUS.LOADING || calculationStatus === STATUS.IDLE) && (<Spin tip='Obliczanie...' size='large'/>)}
+                </div>
+                 <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center'}}>
+                    <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center',padding: 10}}>
+                     <CustomText strong size={18} style={{marginBottom:20}} >Wygenerowano poniższą tablicę przy pomocy algorytmu:</CustomText>
+                     <ConnectionOrderTable signalsIn={signalsIn} signalsOut={signalsOut} additionalSignals={additionalSignals}/>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'center', padding: 20}}>
+                        <div style={{display:'flex',justifyContent:'center',minWidth: 250}}>
+                        <Button type='primary' onClick={()=>{
+                            setStep(1);
+                            clearSignalContext();
+                            clearTableContext();
+                         }}>
+                            Powrót na początek
+                        </Button>
+                        </div>
+                    </div>
+                </div>
+                </>
+                )
+            }
+
         </div>
     )
 }

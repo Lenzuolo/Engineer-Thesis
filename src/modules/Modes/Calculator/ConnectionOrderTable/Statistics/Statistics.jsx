@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { SignalContext, TableContext } from '../../../../../contexts';
 import { CustomText } from '../../../../../components';
-import { uniqNSU } from '../../../../../utils';
+import { uniqNSU, signalLabels } from '../../../../../utils';
 
-const Statistics = ({initial}) =>{
+const Statistics = () =>{
     
-    const {solvable,conditionsArray,conflictingStates,notConflictingStates} = useContext(TableContext);
+    const {solvable,conditionsArray,conflictingStates,notConflictingStates,additionalSignals} = useContext(TableContext);
     const {inArrays, outArrays} = useContext(SignalContext);
     const [mappedWorkingConditions, setMappedWorkingConditions] = useState([]);
     const [mappedNotWorkingConditions, setMappedNotWorkingConditions] = useState([]);
@@ -23,19 +23,26 @@ const Statistics = ({initial}) =>{
         inArrays.forEach(i => signals.push(i.label));
         outArrays.forEach(o => signals.push(o.label));
 
+        if(additionalSignals > 0)
+        {
+            signalLabels('addition',additionalSignals).forEach(a => signals.push(a));
+        }
+
         signals.reverse();
 
-        conditionsArray.forEach(c =>{
+        conditionsArray.forEach((c,i) =>{
             let uniqWC = uniqNSU(c.workingConditions);
+            uniqWC.sort((a,b)=>a-b);
             mapWorkCond.push((
-                <CustomText strong size={16}>
+                <CustomText key={`WC${i}`} strong size={16}>
                     {`Warunki działania dla ${c.label}: ∑(${uniqWC.toString()})`}
                     <sub>{signals.join('')}</sub> 
                 </CustomText>
             ));
             let uniqNWC = uniqNSU(c.notWorkingConditions);
+            uniqNWC.sort((a,b)=>a-b);
             mapNotWorkCond.push((
-                <CustomText strong size={16}>
+                <CustomText key={`NWC${i}`} strong size={16}>
                     {`Warunki niedziałania dla ${c.label}: ∏(${uniqNWC.toString()})`}
                     <sub>{signals.join('')}</sub> 
                 </CustomText>
@@ -43,11 +50,9 @@ const Statistics = ({initial}) =>{
         });
 
         mapConfStates.push((<CustomText key='state' strong size={16}>Znaleziono stany sprzeczne:</CustomText>))
-        
-        console.log(notConflictingStates);
 
-        mapConfStates.push(conflictingStates.map(c=>(
-           <CustomText key={c.value} strong size={16}>{`Stan ${c.value} w taktach ${c.tacts.toString()} dla ${c.label}`}</CustomText> 
+        mapConfStates.push(conflictingStates.map((c,i)=>(
+           <CustomText key={i} strong size={16}>{`Stan ${c.value} w taktach ${c.tacts.toString()} dla ${c.label}`}</CustomText> 
         )));
 
         setMappedWorkingConditions(mapWorkCond);

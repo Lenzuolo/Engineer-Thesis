@@ -10,7 +10,7 @@ import { options} from './options';
 const TimeChart = ({label,sigType}) => 
 {
 
-    const {inArrays,outArrays, addArray, updateArray, arrayChanged } = useContext(SignalContext);
+    const {inArrays,outArrays, updateArray, arrayChanged } = useContext(SignalContext);
     const [data,setData] = useState([{x:0,y:0},{x:1,y:0}]);
     const [xVal,setXVal] = useState(2);
     const [series,setSeries] = useState([{name:'',data: data}]);
