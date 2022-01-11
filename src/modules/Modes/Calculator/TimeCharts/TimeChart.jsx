@@ -7,6 +7,9 @@ import './TimeChart.css';
 import { displayNotification } from '../../../../components';
 import { options} from './options';
 
+
+
+
 const TimeChart = ({label,sigType}) => 
 {
 
@@ -16,20 +19,31 @@ const TimeChart = ({label,sigType}) =>
     const [series,setSeries] = useState([{name:'',data: data}]);
     const [maxTicks,setMaxTicks] = useState(10);
 
-    // if(data.length === 2)
-    // {
-    //     addArray({data,label,sigType});
-    // }
 
-    const chartOptions = {...options,yaxis: {...options.yaxis,title:{text:label}},
-            xaxis: {...options.xaxis,max:maxTicks,tickAmount:maxTicks}};
+    function handleClick(event, chartContext, {dataPointIndex}) 
+    {
+        if(event.button === 0)
+        {
+            if(dataPointIndex > 1)
+                setXVal(dataPointIndex);
+            else
+                displayNotification('error','Błąd','Próba ustawienia markera w niedozwolonym miejscu')
+        }
+    }
+
+    const chartOptions = {...options,
+        yaxis: {...options.yaxis,title:{text:label}},
+            xaxis: {...options.xaxis,max:maxTicks,tickAmount:maxTicks},
+                chart:{...options.chart,events:{...options.chart.events,markerClick:handleClick}},
+                    annotations: {xaxis:[{x:xVal,borderColor:'#00f'
+                      }]}};
 
     useEffect(()=>{
         updateSignals();
-        if(xVal > 10)
+        if(xVal > maxTicks)
         {
-            const ratio = parseInt(xVal/10);
-            setMaxTicks(10 * ratio + 10);
+            const ratio = parseInt(Math.round(xVal/10));
+            setMaxTicks(10 * ratio + 5);
         }
     },[xVal,arrayChanged]);
 
@@ -41,7 +55,22 @@ const TimeChart = ({label,sigType}) =>
                     newData = inArrays.find(arr => arr.label === label);
                     if(newData){
                         let dataArr = newData.data;
-                        if(dataArr.length !== 0){
+                        let needUpdating = false;
+                        if(dataArr.length === data.length)
+                        {
+                            for(let i = 0; i < dataArr.length;i++)
+                            {
+                                if(!(data[i].x === dataArr[i].x)||!(data[i].y === dataArr[i].y))
+                                {
+                                    needUpdating = true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            needUpdating = true;
+                        }
+                        if(dataArr.length !== 0 && needUpdating){
                             setData(dataArr);
                             setSeries([{data: dataArr}]);
                             setXVal(dataArr[dataArr.length-1].x + 1);
@@ -54,7 +83,18 @@ const TimeChart = ({label,sigType}) =>
                     newData = outArrays.find(arr => arr.label === label);
                     if(newData){
                         let dataArr = newData.data;
-                        if(dataArr.length !== 0){
+                        let needUpdating = false;
+                        if(dataArr.length === data.length)
+                        {
+                            for(let i = 0; i < dataArr.length;i++)
+                            {
+                                if(!(data[i].x === dataArr[i].x)||!(data[i].y === dataArr[i].y))
+                                {
+                                    needUpdating = true;
+                                }
+                            }
+                        }
+                        if(dataArr.length !== 0 && needUpdating){
                             setData(dataArr);
                             setSeries([{data: dataArr}]);
                             setXVal(dataArr[dataArr.length-1].x + 1);
@@ -71,17 +111,27 @@ const TimeChart = ({label,sigType}) =>
     const onUpButtonClick = () =>
     {
         const newData = [...data];
-
-        newData.push({x: xVal, y: 1});
-
-        if(!updateArray({data: newData,label,sigType}))
+        const element = newData.find((e)=>e.x === xVal);
+        let newX;
+        if(typeof element === 'undefined')
         {
-            displayNotification('error',`Ryzyko wyścigu w ${label}`,'Podanie sygnału w ten sposób spowoduje wyścig, cofnięto zmiany');
-            newData.pop();
+            newData.push({x: xVal, y: 1});
+            newX = xVal+1;
         }
         else
         {
-            setXVal(xVal+1);
+            element.y = 1;
+            newX = newData[newData.length-1].x+1;
+        }
+
+        if(!updateArray({data: newData,label,sigType},false))
+        {
+            displayNotification('error',`Ryzyko wyścigu w ${label}`,'Podanie sygnału w ten sposób spowoduje wyścig, cofnięto zmiany');
+            typeof element === 'undefined' ? newData.pop() : element.y = 0;
+        }
+        else
+        {
+            setXVal(newX);
         }
         setSeries([{data: newData}]);
         setData(newData);
@@ -91,16 +141,27 @@ const TimeChart = ({label,sigType}) =>
     {
         const newData = [...data];
 
-        newData.push({x: xVal, y: 0});
-
-        if(!updateArray({data: newData,label,sigType}))
+        const element = newData.find((e)=>e.x === xVal);
+        let newX;
+        if(typeof element === 'undefined')
         {
-            displayNotification('error',`Ryzyko wyścigu w ${label}`,'Podanie sygnału w ten sposób spowoduje wyścig, cofnięto zmiany');
-            newData.pop();
+            newData.push({x: xVal, y: 0});
+            newX = xVal+1;
         }
         else
         {
-            setXVal(xVal+1);
+            element.y = 0;
+            newX = newData[newData.length-1].x +1;
+        }
+
+        if(!updateArray({data: newData,label,sigType},false))
+        {
+            displayNotification('error',`Ryzyko wyścigu w ${label}`,'Podanie sygnału w ten sposób spowoduje wyścig, cofnięto zmiany');
+            typeof element === 'undefined' ? newData.pop() : element.y = 1;
+        }
+        else
+        {
+            setXVal(newX);
         }
         setSeries([{data: newData}]);
         setData(newData);
@@ -109,8 +170,8 @@ const TimeChart = ({label,sigType}) =>
     const onClearButtonClick = () =>
     {
         setData([{x:0,y:0},{x:1,y:0}]);
-        updateArray({data: [{x:0,y:0},{x:1,y:0}],label,sigType});
-        setXVal(0);
+        updateArray({data: [{x:0,y:0},{x:1,y:0}],label,sigType},false);
+        setXVal(2);
         setSeries([{data: [{x:0,y:0},{x:1,y:0}]}]);
         setMaxTicks(10);
     }
@@ -120,13 +181,21 @@ const TimeChart = ({label,sigType}) =>
         if(data.length > 2)
         {
             const newData = [...data];
-            newData.pop();
-            updateArray({data: newData,label,sigType});
+
+            const element = newData.findIndex((e)=>e.x === xVal-1);
+            if(element === newData.length-1)
+                newData.pop();
+            else
+            {
+                displayNotification('error','Błąd','Cofanie z punktu wcześniejszego niż ostatni nie jest dozwolone');
+                return;
+            }
+            updateArray({data: newData,label,sigType},true);
             setXVal(xVal-1);
             if(xVal < 10){
                 setMaxTicks(10);
             }
-            setSeries([{data: data}]);
+            setSeries([{data: newData}]);
             setData(newData);
         }
     }

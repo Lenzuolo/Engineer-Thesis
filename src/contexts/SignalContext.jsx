@@ -53,7 +53,7 @@ const SignalContextProvider = ({children}) =>
     },[state]);
 
 
-    const updateArray = useCallback(({data,label,sigType})=>{
+    const updateArray = useCallback(({data,label,sigType},undo)=>{
         
         
         let arrName;
@@ -81,7 +81,7 @@ const SignalContextProvider = ({children}) =>
                     return;
                 }
             });
-            signalArray = SignalService.ContinueSignal(signalArray,data,label);
+            signalArray = SignalService.ContinueSignal(signalArray,data,label,undo);
             localStorage.setItem(arrName,JSON.stringify(signalArray));
             const newState = {...state,[arrName]:signalArray,arrayChanged:!state.arrayChanged};
             setState(newState);
@@ -93,6 +93,32 @@ const SignalContextProvider = ({children}) =>
         }
 
     },[state]);
+
+    const deleteArray = (sigType)=>
+    {
+        let arrName;
+        switch(sigType)
+        {
+            case 'in':
+                arrName = 'inArrays';
+                break;
+            case 'out':
+                arrName = 'outArrays';
+                break;
+            default:
+                break;
+        }
+
+        const signalArrayString = localStorage.getItem(arrName);
+        if(signalArrayString !== null)
+        {
+            let signalArray = JSON.parse(signalArrayString);
+            signalArray.pop();
+            localStorage.setItem(arrName,JSON.stringify(signalArray));
+            const newState = {...state,[arrName]:signalArray};
+            setState(newState);
+        }
+    };
 
     const clearSignalContext = useCallback(()=>
     {
@@ -117,7 +143,7 @@ const SignalContextProvider = ({children}) =>
     },[state]);
 
     return (
-        <SignalContext.Provider value={{ ...state, addArray, updateArray, clearSignalContext, areSignalsCorrect }}>
+        <SignalContext.Provider value={{ ...state, addArray, updateArray, clearSignalContext, areSignalsCorrect, deleteArray }}>
           {children}
         </SignalContext.Provider>
       );

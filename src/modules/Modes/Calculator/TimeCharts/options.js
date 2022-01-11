@@ -16,11 +16,11 @@ export const options =
           },
           toolbar:
           {
-              show: true,
+              show: false,
               tools:
               {
                 download: false,
-                selection: true,
+                selection: false,
                 zoom: false,
                 zoomin: false,
                 zoomout: false,
@@ -29,24 +29,10 @@ export const options =
                 customIcons: [],
               },
           },
-          selection:
-          {
-              enabled: true,
-          },
           events:
           {
-              selection:
-                function(chartContext, { xaxis, yaxis }) 
-                {
-                    console.log(chartContext,xaxis,yaxis);
-                },
-              markerClick:
-                function(event, chartContext, { seriesIndex, dataPointIndex, config}) 
-                {
-                    console.log(event,chartContext,{ seriesIndex,dataPointIndex,config });
-                },
-          }
-
+              markerClick: undefined,
+          },
         },
         grid:
         {
@@ -67,7 +53,7 @@ export const options =
         },
         xaxis: {
             type: 'numeric',
-            tickPlacement: 'on',
+            tickPlacement: 'between',
             labels: {
                 show: false,
             },
@@ -98,6 +84,7 @@ export const options =
             },
         },
         tooltip: {
+            shared: false,
             enabled: true,
             interesect: true,
             x: {

@@ -1,4 +1,7 @@
 
+export const MAX_SIGNALS = 5;
+
+
 export const MODES = 
 {
     SiwinskiTheory: 'TKŁ - Teoria',
@@ -23,6 +26,7 @@ export const uniqNSU = (arr) =>{
     }
     return out;
 }
+
 
 export const signalLabels = (label,amount) =>
 {

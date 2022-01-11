@@ -46,28 +46,47 @@ class SignalService
         return false;
     }
 
-    static ContinueSignal(signalArray,data,label)
+    static ContinueSignal(signalArray,data,label,undo)
     {
         const currentMaxLength = findMaxLength(signalArray);
-        if(currentMaxLength > data.length)
+        if(!undo)
         {
-            return signalArray;
+            if(currentMaxLength > data.length)
+            {
+                return signalArray;
+            }
+            else
+            {
+                for(let i = 0; i < signalArray.length;i++)
+                {
+                    if(signalArray[i].label !== label)
+                    {
+                        const currLength = signalArray[i].data.length;
+                        const diff = data.length - currLength;
+                        const lastElem = signalArray[i].data[currLength-1];
+                        for(let j=1;j<=diff;j++)
+                        {
+                            signalArray[i].data.push({x:lastElem.x + j, y:lastElem.y});
+                        }
+                    }
+                }
+                return signalArray;
+            }
         }
         else
         {
-            for(let i = 0; i < signalArray.length;i++)
+            signalArray.forEach((s)=>
             {
-                if(signalArray[i].label !== label)
+                if(s.label !== label)
                 {
-                    const currLength = signalArray[i].data.length;
-                    const diff = data.length - currLength;
-                    const lastElem = signalArray[i].data[currLength-1];
-                    for(let j=1;j<=diff;j++)
+                    const currLength = s.data.length;
+                    const diff = Math.abs(data.length - currLength);
+                    for(let i = 0; i < diff;i++)
                     {
-                        signalArray[i].data.push({x:lastElem.x + j, y:lastElem.y});
+                        s.data.pop();
                     }
                 }
-            }
+            });
             return signalArray;
         }
     }
