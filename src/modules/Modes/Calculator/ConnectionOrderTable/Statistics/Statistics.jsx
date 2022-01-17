@@ -3,22 +3,26 @@ import { SignalContext, TableContext } from '../../../../../contexts';
 import { CustomText } from '../../../../../components';
 import { uniqNSU, signalLabels } from '../../../../../utils';
 
-const Statistics = () =>{
+const Statistics = ({initial}) =>{
     
-    const {solvable,conditionsArray,conflictingStates,notConflictingStates,additionalSignals} = useContext(TableContext);
+    const {solvable,conditionsArray,conflictingStates,notConflictingStates,additionalSignals,initialState} = useContext(TableContext);
     const {inArrays, outArrays} = useContext(SignalContext);
-    const [mappedWorkingConditions, setMappedWorkingConditions] = useState([]);
-    const [mappedNotWorkingConditions, setMappedNotWorkingConditions] = useState([]);
+    const [mappedConditions,setMappedConditions] = useState([]);
     const [mappedConflictingStates,setMappedConflictingStates] = useState([]);
 
     useEffect(()=>generateMappedContent(),[solvable]);
 
     const generateMappedContent = () => {
-        let mapWorkCond = [];
-        let mapNotWorkCond = [];
+ 
         let mapConfStates = [];
+        let mappedCond = []
 
         const signals = [];
+
+        
+        const cond = initial ? initialState.conditionsArray : conditionsArray;
+        const cs = initial ? initialState.conflictingStates : conflictingStates;
+
 
         inArrays.forEach(i => signals.push(i.label));
         outArrays.forEach(o => signals.push(o.label));
@@ -30,10 +34,10 @@ const Statistics = () =>{
 
         signals.reverse();
 
-        conditionsArray.forEach((c,i) =>{
+        cond.forEach((c,i) =>{
             let uniqWC = uniqNSU(c.workingConditions);
             uniqWC.sort((a,b)=>a-b);
-            mapWorkCond.push((
+            mappedCond.push((
                 <CustomText key={`WC${i}`} strong size={16}>
                     {`Warunki działania dla ${c.label}: ∑(${uniqWC.toString()})`}
                     <sub>{signals.join('')}</sub> 
@@ -41,7 +45,7 @@ const Statistics = () =>{
             ));
             let uniqNWC = uniqNSU(c.notWorkingConditions);
             uniqNWC.sort((a,b)=>a-b);
-            mapNotWorkCond.push((
+            mappedCond.push((
                 <CustomText key={`NWC${i}`} strong size={16}>
                     {`Warunki niedziałania dla ${c.label}: ∏(${uniqNWC.toString()})`}
                     <sub>{signals.join('')}</sub> 
@@ -51,12 +55,11 @@ const Statistics = () =>{
 
         mapConfStates.push((<CustomText key='state' strong size={16}>Znaleziono stany sprzeczne:</CustomText>))
 
-        mapConfStates.push(conflictingStates.map((c,i)=>(
+        mapConfStates.push(cs.map((c,i)=>(
            <CustomText key={i} strong size={16}>{`Stan ${c.value} w taktach ${c.tacts.toString()} dla ${c.label}`}</CustomText> 
         )));
 
-        setMappedWorkingConditions(mapWorkCond);
-        setMappedNotWorkingConditions(mapNotWorkCond);
+        setMappedConditions(mappedCond);
         setMappedConflictingStates(mapConfStates);
 
     }
@@ -65,11 +68,12 @@ const Statistics = () =>{
     return(
         <>
         {
-            solvable ?
+            (initial ? initialState.solvable : solvable) ?
                 <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
                     <CustomText strong size={16}>Rozwiązywalna: Tak</CustomText>
-                    {mappedWorkingConditions}
-                    {mappedNotWorkingConditions}
+                    {/* {mappedWorkingConditions}
+                    {mappedNotWorkingConditions} */}
+                    {mappedConditions}
                 </div>
                 :
                 <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>

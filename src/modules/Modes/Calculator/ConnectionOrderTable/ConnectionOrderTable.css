@@ -1,11 +1,37 @@
 table,
 th,
 td {
-  border: 1px solid black;
   box-shadow: 0 0 1px 1px black;
+  border: 1px solid black;
   border-collapse: collapse;
 }
 
+th {
+  box-shadow: 0 0 1px 1px black;
+}
+
+
 td{
-  width: 3px;
+  box-shadow: 0 0 1px 1px black;
+  min-width: 18px;
+  max-height: 5px;
+}
+
+.borders
+{
+    border-style: solid hidden hidden solid;
+    border-width: 1px;
+}
+
+.borders .notBordered
+{
+  border: 0px none transparent !important;
+  box-shadow: 3px 5px 1px 4px white !important;
+}
+
+.borders .bordered
+{
+  border-style: none solid none none !important;
+  border-width: 5px;
+  box-shadow: 3px 5px 1px 4px white !important;
 }

@@ -1,23 +1,24 @@
-import React, { useContext, useState } from 'react';
-import { Form,InputNumber,Button,Card,Spin} from 'antd';
+import React, { useContext, useEffect, useState } from 'react';
+import { Form,InputNumber,Button,Card,Spin, Popconfirm} from 'antd';
 import { signalLabels, STATUS, MAX_SIGNALS } from '../../../utils';
 import { ConnectionOrderTable } from './ConnectionOrderTable';
 import { SignalContext, TableContext } from '../../../contexts';
 import { TimeChart } from './TimeCharts';
 import { CustomText, displayNotification } from '../../../components';
-import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { MinusCircleOutlined, PlusCircleOutlined, QuestionCircleOutlined} from '@ant-design/icons';
 import './Calculator.css';
-
 
 const Calculator = () =>
 {
     const [step,setStep] = useState(1);
     const [signalsIn,setSignalsIn] = useState(1);
     const [signalsOut,setSignalsOut] = useState(1);
+    const [disabled,setDisabled] = useState(false);
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
     const {clearSignalContext,areSignalsCorrect,addArray,deleteArray} = React.useContext(SignalContext);
     const {checkSolvable,calculateTableValues,solvable,solveTable,calculationStatus,additionalSignals,clearTableContext} = useContext(TableContext);
+
 
     const onFinish = ({sigIn,sigOut}) =>
     {
@@ -40,13 +41,13 @@ const Calculator = () =>
 
         setMappedLabelsIn(labelsIn.map(li=>
             {
-                addArray({data:[{x:0,y:0},{x:1,y:0}],label:li,sigType:'in'});
+                addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:li,sigType:'in'});
                 return <TimeChart key={li} label={li} sigType='in'/>
         }));
 
         setMappedLabelsOut(labelsOut.map(lo=>
             {
-                addArray({data:[{x:0,y:0},{x:1,y:0}],label:lo,sigType:'out'});
+                addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:lo,sigType:'out'});
                 return <TimeChart key={lo} label={lo} sigType='out'/>
             }));
 
@@ -63,8 +64,8 @@ const Calculator = () =>
                 const labels = [...mappedLabelsIn];
                 const arr = signalLabels('in',signals+1);
                 const label = arr[arr.length-1];
-                labels.push(<TimeChart key={label} label={label} sigType='in'/>);
-                addArray({data:[{x:0,y:0},{x:1,y:0}],label:label,sigType:'in'});
+                labels.push(<TimeChart disabled={disabled} key={label} label={label} sigType='in'/>);
+                addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:label,sigType:'in'});
                 setMappedLabelsIn(labels); 
             }
             else if(signal === 'out')
@@ -74,8 +75,8 @@ const Calculator = () =>
                 const labels = [...mappedLabelsOut];
                 const arr = signalLabels('out',signals+1);
                 const label = arr[arr.length-1];
-                labels.push(<TimeChart key={label} label={label} sigType='out'/>);
-                addArray({data:[{x:0,y:0},{x:1,y:0}],label:label,sigType:'out'});
+                labels.push(<TimeChart disabled={disabled} key={label} label={label} sigType='out'/>);
+                addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:label,sigType:'out'});
                 setMappedLabelsOut(labels); 
             };
         }
@@ -131,107 +132,160 @@ const Calculator = () =>
                         </Form.Item>
                 </Form>
             )}
-            {step === 2 && (
+            {step > 1 && (
                 <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'stretch'}}>
-                    <div style={{display:'flex',justifyContent:'space-evenly'}}>
-                        <Card title='Sygnały Wejściowe' className='signalCard' bordered={false} style={{width: '40%'}}>
-                            {(signalsIn > 1 && signalsOut < signalsIn)&& <Button icon={<MinusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('delete','in')} />}
+                    <CustomText strong size={13} style={{marginBottom:5}}>
+                        Proszę uzupełnić przebiegi czasowe. Jeżeli sygnał wejściowy wpływa bezpośrednio na sygnał wyjścia to zmiany
+                        muszą być zaznaczone w tym samym punkcie na wykresach. Kliknięcie na punkt wykresu spowoduje przeniesienie wskaźnika.   
+                    </CustomText>
+                    <CustomText strong size={14} style={{marginBottom:10}}>
+                        Przyciski: ↑ powoduje sygnał dodatni, ↓ ujemny, × czyści wykres, a ↶ cofa zmianę.
+                    </CustomText>
+                    <div style={{display:'flex',alignItems:'center',flexDirection:'column'}}>
+                        <Card title='Sygnały Wejściowe' className='signalCard' bordered={false} style={{width: '40%',padding:'0 0'}}>
+                            <div style={{display:'flex',justifyContent:'center'}}>
+                                <div style={{display:'flex',justifyContent:'space-around',width:'20%'}}>
+                                    {(signalsIn > 1 && signalsOut < signalsIn)&& <Button size='small' icon={<MinusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('delete','in')} />}
+                                    {signalsIn < MAX_SIGNALS && <Button size='small' icon={<PlusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('add','in')}/>}
+                                </div>
+                            </div>
                             {
                                 mappedLabelsIn
                             }
-                            {signalsIn < MAX_SIGNALS && <Button icon={<PlusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('add','in')}/>}
                         </Card>
-                        <Card title='Sygnały Wyjściowe' className='signalCard' bordered={false} style={{width: '40%'}}>
-                            {signalsOut > 1 && <Button icon={<MinusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('delete','out')} />}
+                        <Card title='Sygnały Wyjściowe' className='signalCard' bordered={false} style={{width: '40%',paddingBottom: 10}}>
+                            <div style={{display:'flex',justifyContent:'center'}}>
+                                <div style={{display:'flex',justifyContent:'space-around',width:'20%'}}>
+                                    {signalsOut > 1 && <Button size='small' icon={<MinusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('delete','out')} />}
+                                    {(signalsOut < MAX_SIGNALS && signalsOut < signalsIn) && <Button size='small' icon={<PlusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('add','out')}/>}
+                                </div>
+                            </div>
                             {
                                 mappedLabelsOut
                             }
-                            {(signalsOut < MAX_SIGNALS && signalsOut < signalsIn) && <Button icon={<PlusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('add','out')}/>}
                         </Card>
                     </div>
-                    <div style={{display:'flex',justifyContent:'center'}}>
-                        <div style={{display:'flex',justifyContent:'space-between',minWidth: 250}}>
-                        <Button type='primary' onClick={()=>{
-                            setStep(1);
-                            clearSignalContext();
-                        }}>
-                            Powrót
-                        </Button>
-                        <Button type='primary' onClick={()=>{
-                            const {correct,length} = areSignalsCorrect(signalsIn,signalsOut)
-                            if(correct){
-                                const {dependencies,nsuArray} = calculateTableValues(length);
-                                checkSolvable({dependencyArray:dependencies,nsuArray});
-                                setStep(3);
-                            }
-                            else{
-                                displayNotification('error','Błąd sygnałów','Nie wszystkie przebiegi mają tą samą ilość sygnałów');
-                            }
-                        }}>
-                            Dalej
-                        </Button>
+                    {step === 2 && (
+                        <div style={{display:'flex',justifyContent:'center'}}>
+                            <div style={{display:'flex',justifyContent:'space-around',minWidth: 250}}>
+                                <Button size='small' type='primary' onClick={()=>{
+                                setStep(1);
+                                clearSignalContext();
+                                }}>
+                                    Powrót
+                                </Button>
+                                <Popconfirm 
+                                    title='Uwaga! Kliknięcie dalej spowoduje automatyczne uzupelnienie sygnałów do stanu początkowego. Kontynuować?' 
+                                    okText="Tak"
+                                    cancelText="Nie"
+                                    icon={<QuestionCircleOutlined style={{ color: 'orange' }} />}
+                                    onCancel={()=>{}}
+                                    onConfirm={()=>{
+                                        const {length,inArrays,outArrays,correct} = areSignalsCorrect(signalsIn,signalsOut);
+                                        if(!correct)
+                                        {
+                                            displayNotification('error','Błąd','Wystąpił błąd, prawdobodobnie wystąpił wykres bez żadnych sygnałów');
+                                            return;
+                                        }
+                                        const {dependencies,nsuArray} = calculateTableValues(length,inArrays,outArrays);
+                                        checkSolvable({dependencyArray:dependencies,nsuArray},[],true);
+                                        setStep(3);
+                                    }}
+                                >
+                                    <Button size='small' type='primary'>
+                                        Dalej
+                                    </Button>
+                                </Popconfirm>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    )}
+                    {step > 2 && (
+                        <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center'}}>
+                            <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center',padding: 10}}>
+                                <CustomText strong size={18} style={{marginBottom:20}} >Na podstawie podanych sygnałów wygenerowano poniższą TKŁ:</CustomText>
+                                <ConnectionOrderTable initial={true} signalsIn={signalsIn} signalsOut={signalsOut}/>
+                            </div>
+                            {step === 3 && (
+                                <div style={{display:'flex',justifyContent:'center', padding: 20}}>
+                                    <div style={{display:'flex',justifyContent:'center',minWidth: 250}}>
+                                        {/* <Button type='primary' onClick={()=>{
+                                        setStep(2);
+                                        }}>
+                                        Powrót
+                                        </Button> */}
+                                        {   solvable ? 
+                                            <Button type='primary' onClick={()=>{
+                                                setStep(1);
+                                                clearSignalContext();
+                                            }}>
+                                                Powrót na początek
+                                            </Button> :
+                                            <Button type='primary' onClick={()=>{
+                                                setStep(4);
+                                                solveTable();
+                                            }}>
+                                                Rozwiąż TKŁ
+                                            </Button>
+                                        }
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {step > 3 && (
+                        <>
+                        <div>
+                            {(calculationStatus === STATUS.LOADING || calculationStatus === STATUS.IDLE) && (<Spin tip='Obliczanie...' size='large'/>)}
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center'}}>
+                            <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center',padding: 10}}>
+                                <CustomText strong size={18} style={{marginBottom:20}} >Wyznaczono granice i zaproponowano sposób kodowania:</CustomText>
+                                <ConnectionOrderTable initial={true} showBorders={true} signalsIn={signalsIn} signalsOut={signalsOut}/>
+                            </div>
+                            {step === 4 && (
+                            <div style={{display:'flex',justifyContent:'center', padding: 20}}>
+                                <div style={{display:'flex',justifyContent:'center',minWidth: 250}}>
+                                    <Button type='primary' onClick={()=>{
+                                    setStep(5);
+                                }}>
+                                    Wygeneruj TKŁ
+                                </Button>
+                                </div>
+                            </div>
+                            )}
+                        </div>
+                        </>
+                    )}
+                    {step > 4 && (
+                        <>
+                        <div>
+                            {(calculationStatus === STATUS.LOADING || calculationStatus === STATUS.IDLE) && (<Spin tip='Obliczanie...' size='large'/>)}
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center'}}>
+                            <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center',padding: 10}}>
+                                <CustomText strong size={18} style={{marginBottom:20}} >Wygenerowano poniższą tablicę przy pomocy algorytmu:</CustomText>
+                                <ConnectionOrderTable initial={false} signalsIn={signalsIn} signalsOut={signalsOut}/>
+                            </div>
+                            <div style={{display:'flex',justifyContent:'center', padding: 20}}>
+                                <div style={{display:'flex',justifyContent:'center',minWidth: 250}}>
+                                    <Button type='primary' onClick={()=>{
+                                    setStep(1);
+                                    clearSignalContext();
+                                    clearTableContext();
+                                }}>
+                                    Powrót na początek
+                                </Button>
+                                </div>
+                            </div>
+                        </div>
+                        </>
+                    )}
+                </div>    
             )}
-            {step === 3 && (
-                <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center'}}>
-                    <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center',padding: 10}}>
-                        <CustomText strong size={18} style={{marginBottom:20}} >Na podstawie podanych sygnałów wygenerowano poniższą TKŁ:</CustomText>
-                        <ConnectionOrderTable signalsIn={signalsIn} signalsOut={signalsOut}/>
-                    </div>
-                    <div style={{display:'flex',justifyContent:'center', padding: 20}}>
-                        <div style={{display:'flex',justifyContent:'space-between',minWidth: 250}}>
-                        <Button type='primary' onClick={()=>{
-                            setStep(2);
-                        }}>
-                            Powrót
-                        </Button>
-                    {solvable ? 
-                        <Button type='primary' onClick={()=>{
-                            setStep(1);
-                            clearSignalContext();
-                        }}>
-                            Powrót na początek
-                        </Button> :
-                        <Button type='primary' onClick={()=>{
-                            setStep(4);
-                            solveTable();
-                        }}>
-                            Rozwiąż TKŁ
-                        </Button>}
-                        </div>
-                    </div>
-                </div>
-            )}
-            {step === 4 && (
-                <>
-                <div>
-                    {(calculationStatus === STATUS.LOADING || calculationStatus === STATUS.IDLE) && (<Spin tip='Obliczanie...' size='large'/>)}
-                </div>
-                 <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center'}}>
-                    <div style={{display:'flex',flexDirection:'column',width:'100%', alignItems: 'center',padding: 10}}>
-                     <CustomText strong size={18} style={{marginBottom:20}} >Wygenerowano poniższą tablicę przy pomocy algorytmu:</CustomText>
-                     <ConnectionOrderTable signalsIn={signalsIn} signalsOut={signalsOut} additionalSignals={additionalSignals}/>
-                    </div>
-                    <div style={{display:'flex',justifyContent:'center', padding: 20}}>
-                        <div style={{display:'flex',justifyContent:'center',minWidth: 250}}>
-                        <Button type='primary' onClick={()=>{
-                            setStep(1);
-                            clearSignalContext();
-                            clearTableContext();
-                         }}>
-                            Powrót na początek
-                        </Button>
-                        </div>
-                    </div>
-                </div>
-                </>
-                )
-            }
-
         </div>
     )
 }
+
+
 
 export default Calculator;

@@ -12,8 +12,18 @@ const defaultState = () =>(
     nsuArray: [],
     dependencyArray: [],
     tacts: 0,
+    borders: [],
+    indices: [],
     calculationStatus: STATUS.IDLE,
-    additionalSignals: 0, 
+    additionalSignals: [],
+    initialState: {
+        conflictingStates: [],
+        notConflictingStates: [],
+        conditionsArray: [],
+        nsuArray: [],
+        dependencyArray: [],
+        solvable: false,
+    } 
 });
 
 const TableContext = React.createContext(defaultState());
@@ -25,22 +35,24 @@ const TableContextProvider = ({children}) => {
     const { inArrays,outArrays} = useContext(SignalContext);
 
 
-    const calculateTableValues = (length) => {
-        const {tacts,dependencies} = TableService.calculateTacts(inArrays,outArrays,length);
-        const signals = [...inArrays,...outArrays];
+    const calculateTableValues = (length,arrIn,arrOut) => {
+        const {tacts,dependencies} = TableService.calculateTacts(arrIn,arrOut,length);
+        const signals = [...arrIn,...arrOut];
         const nsuArray  = TableService.calculateNSU(dependencies,signals);
         setState((prev=>{
             const newState = {...prev};
             newState.dependencyArray = dependencies;
             newState.tacts = tacts;
             newState.nsuArray = nsuArray;
+            newState.initialState.nsuArray = nsuArray;
+            newState.initialState.dependencyArray = dependencies;
             return newState;
         }));
 
         return {dependencies,nsuArray};
     }
 
-    const checkSolvable = ({dependencyArray,nsuArray},additionalSignals) =>{
+    const checkSolvable = ({dependencyArray,nsuArray},additionalSignals,initial) =>{
         
         let conditionsArray = []
         let conflictingStates = []
@@ -66,7 +78,13 @@ const TableContextProvider = ({children}) => {
             }
         });
 
-        conflictingStates.sort((a,b)=> a.tacts[0]-b.tacts[0]);
+        conflictingStates.sort((a,b)=> {
+            if(a.tacts[1] === b.tacts[1])
+            // {
+                return a.tacts[0] - b.tacts[0];
+            // }
+            return a.tacts[1] - b.tacts[1];
+        });
 
         conditionsArray.forEach(c =>{
             for( let i = 0; i < c.workingConditions.length;i++){
@@ -118,13 +136,19 @@ const TableContextProvider = ({children}) => {
             isSolvable = true;
         }
 
-
         setState((prev=>{
             const newState = {...prev}
             newState.solvable = isSolvable; 
             newState.conditionsArray = conditionsArray; 
             newState.conflictingStates = conflictingStates;
             newState.notConflictingStates = notConflictingStates;
+            if(initial)
+            {
+                newState.initialState.conflictingStates = conflictingStates;
+                newState.initialState.notConflictingStates = notConflictingStates;
+                newState.initialState.conditionsArray = conditionsArray;
+                newState.solvable = isSolvable;
+            }
             return newState;
         }));
     }
@@ -136,19 +160,19 @@ const TableContextProvider = ({children}) => {
             return newState;
         }));
         const {borders,stack} = TableService.findBorders(state.nsuArray,state.conflictingStates,state.notConflictingStates);
-        console.log(borders,stack);
-        const {dependencies,tacts,labels} = TableService.codeSignals(borders,stack,state.dependencyArray,
+        const {dependencies,tacts,labels,indices} = TableService.codeSignals(borders,stack,state.dependencyArray,
             {conflictingStates:state.conflictingStates});
-        console.log(dependencies,labels);
         const nsuArray = TableService.calculateNSU(dependencies,[...inArrays,...outArrays,...labels]);
-        checkSolvable({dependencyArray: dependencies,nsuArray:nsuArray},labels);
+        checkSolvable({dependencyArray: dependencies,nsuArray:nsuArray},labels,false);
         setState((prev=>{
             const newState = {...prev}
             newState.tacts = tacts;
+            newState.borders = borders;
             newState.dependencyArray = dependencies;
             newState.nsuArray = nsuArray;
+            newState.indices = indices;
             newState.calculationStatus = STATUS.FINISHED;
-            newState.additionalSignals = labels.length;
+            newState.additionalSignals = labels;
             return newState;
         }));
     }

@@ -14,12 +14,17 @@ function edgeDetector(arg1,arg2)
 }
 
 function isNotConflictingState(part,nextPartEnd,state,notConfArray){
+
     const existingState = notConfArray.find(s => s.value === state.NSU);
     if(typeof existingState !== 'undefined'){
         const tacts = existingState.tacts;
         const sliced = part.slice(0,part.indexOf(state));
         for(let i = 0; i < tacts.length; i++){
-            if((sliced.some(p=>p.tact === tacts[i]) && tacts[i] !== state.tact) && tacts[i] !== nextPartEnd){
+            if((sliced.some(p=>p.tact === tacts[i]) && tacts[i] !== state.tact)){
+                return true;
+            }
+            else if(tacts[i] === nextPartEnd)
+            {
                 return true;
             }
         }
@@ -27,9 +32,26 @@ function isNotConflictingState(part,nextPartEnd,state,notConfArray){
     return false;
 }
 
+function equalsStartState(dependencyArray,state)
+{
+    const arr = dependencyArray.filter(da => da.tact === 0);
 
+    const elem = arr.find(s => s.label === state.label && s.type === state.type);
+    if(typeof elem !== 'undefined')
+    {
+        return true;
+    }
+    else
+    {
+        if(state.type === 'falling')
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
-function isAnotherConflict(state,nextPartEnd,confArray,firstBorder){
+function isAnotherConflict(state,nextPartEnd,currentPart,confArray,firstBorder){
     let existingStates = [];
     confArray.forEach(c =>{
         if(c.value === state.NSU){
@@ -39,6 +61,11 @@ function isAnotherConflict(state,nextPartEnd,confArray,firstBorder){
                 }
                 else
                 {
+                    const filtered = currentPart.slice(0,currentPart.indexOf(state));
+                    if(filtered.some(s=>s.NSU === state.NSU && c.tacts.includes(s.tact)))
+                    {
+                        existingStates.push(c);
+                    }
                     if(firstBorder)
                     {
                         existingStates.push(c);
@@ -107,7 +134,8 @@ function isConflictingPair(state1,state2,confArray)
 
 function checkParts(part1,part2,confArray)
 {
-    if(part1.length === 1 && part2.length === 1)
+    if(part1.length === 1 
+        || part2.length === 1)
     {
         return false;
     }
@@ -164,16 +192,33 @@ function checkParts(part1,part2,confArray)
 function partCount(indexedParts)
 {
     let indices = [];
-
+    let original = [];
+    let repeats = [];
     indexedParts.forEach(i =>
         {
+            original.push(i.index);
             if(!indices.includes(i.index))
             {
                 indices.push(i.index);
             }
+            else
+            {
+                repeats.push(i.index);
+            }
         });
 
-    return {indices:indices};
+    return {indices:indices,repeats};
+}
+
+function updateCodedSignals(signal,signals)
+{
+    const filtered = signals.filter(s=>s.label !== signal.label);
+
+    filtered.forEach(s=>{
+        s.working ? s.signalChanges.push('+') : s.signalChanges.push('-');
+    });
+
+    return;
 }
 
 class TableService
@@ -182,6 +227,19 @@ class TableService
     {
         let tact = 1;
         let dependencyArray = [];
+        let allSignals = [...inArray,...outArray];
+
+        allSignals.forEach(s=> {
+            if(s.data[0].y === 1)
+            {
+                dependencyArray.push({tact: 0,label: s.label, type:'rising'});
+            }
+        })
+
+        if(dependencyArray.length === 0)
+        {
+            dependencyArray.push({tact: 0,label: '', type:''});
+        }
 
         for(let i = 0; i < length-1; i++)
         {
@@ -195,34 +253,44 @@ class TableService
                     break;
                 }
             }
-            if(signalIn.label !== ''){
-                for(let j = 0; j < outArray.length;j++){
+            for(let j = 0; j < outArray.length;j++){
                     const data = outArray[j].data;
                     const { detected, type } = edgeDetector(data[i],data[i+1]);
                     if(detected){
                         signalOut = {label: outArray[j].label, type: type};
                         break;
                     }
-                }
+            }
+            if(signalIn.label !== '')
+            {
                 dependencyArray.push({tact: tact,label: signalIn.label, type:signalIn.type});
                 if(signalOut.label !== ''){
                     dependencyArray.push({tact: tact+1, label: signalOut.label, type: signalOut.type});
-                    tact+=2;
+                tact+=2;
                 }
                 else{
                     tact++;
                 }
             }
+            else
+            {
+                if(signalOut.label !== '')
+                {
+                    dependencyArray.push({tact: tact, label: signalOut.label, type: signalOut.type});
+                    tact++;
+                }
+            }
         }
-
         return {tacts: tact-1, dependencies: dependencyArray}
 
 
     }
     static calculateNSU(dependencies,signals){
 
-        let nsuArray = [{tact:0,NSU:0}];
+        let nsuArray = [];
+
         let NSU = 0;
+        let startCount = 0;
         for(let i = 0; i < dependencies.length; i++){
             for(let j = 0; j < signals.length;j++){
                 if(signals[j].label === dependencies[i].label){
@@ -238,11 +306,25 @@ class TableService
                     }
                 }
             }
+            if(dependencies[i].tact === 0)
+            {
+                startCount++;
+            }
             nsuArray.push({tact: dependencies[i].tact, NSU: NSU});
         }
 
-        if(dependencies[dependencies.length-1].type==='falling'){
-             nsuArray.pop();
+        if(startCount > 1)
+        {
+            nsuArray.splice(0,startCount,{tact:0,NSU:nsuArray[startCount-1].NSU});
+        }
+
+        // if(dependencies[dependencies.length-1].type==='falling'){
+        //      nsuArray.pop();
+        // }
+
+        if(nsuArray[nsuArray.length-1].NSU === nsuArray[0].NSU)
+        {
+            nsuArray.pop();
         }
 
         return nsuArray;
@@ -260,16 +342,44 @@ class TableService
                     start = dependencyArray[i].tact;
                 }
                 else if(dependencyArray[i].type === 'falling'){
-                    end = i === dependencyArray.length-1 ? dependencyArray[i].tact-1 : dependencyArray[i].tact;
+                    end = dependencyArray[i].tact;
                 }
-                if(start !== null && end !== null){
-                    
-                    let startOffset = start > 0.5 ? 1 : 0;
-                    let endOffset = i === dependencyArray.length-1 ? 0 : 1;
-                    let sliced = nsuArray.slice(findNsuIndex(start,nsuArray)-startOffset,findNsuIndex(end,nsuArray)-endOffset);
+                if(start !== null)
+                {
+                    if(end !== null)
+                    {
+                        let startOffset = start > 0 ? 1 : 0;
+                        let endIndex;
+                        if(i === dependencyArray.length-1)
+                        {
+                            if(equalsStartState(dependencyArray,dependencyArray[i]))
+                            { 
+                                endIndex=nsuArray.length-1;
+                            }
+                        }
+                        else
+                        {
+                            endIndex = findNsuIndex(end,nsuArray)-1;
+                        }
+                        let sliced = nsuArray.slice(findNsuIndex(start,nsuArray)-startOffset,endIndex);
+                        workingConditions = workingConditions.concat(sliced);
+                        start = null;
+                        end = null;
+                    }
+                    else if(end === null && i === dependencyArray.length-1)
+                    {
+                        let sliced = nsuArray.slice(nsuArray.length-1,nsuArray.length);
+                        workingConditions = workingConditions.concat(sliced);
+                    }
+                }
+            }
+            else if(i === dependencyArray.length-1)
+            {
+                if(start !== null && end === null)
+                {
+                    let startOffset = start > 0 ? 1 : 0;
+                    let sliced = nsuArray.slice(findNsuIndex(start,nsuArray)-startOffset,nsuArray.length);
                     workingConditions = workingConditions.concat(sliced);
-                    start = null;
-                    end = null;
                 }
             }
         }
@@ -284,6 +394,8 @@ class TableService
         let solved = false;
         let endOfCycle = false;
         let reduction = false;
+        let mergeEndProcedure = false;
+        let additionalBorderProcedure = {isNeeded: false, borderAdded: false, stackIndex:0};
         let doubleBorderProcedure = {isNeeded:false, firstBorder: {set: false, index: -1}};
         let currentPart;
         let index = 0;
@@ -291,6 +403,7 @@ class TableService
         let borders = [];
         let arr = [...conflictingStates];
         let stack = [[...nsuArray]];
+
         while(!solved)
         {
             if(reduction)
@@ -330,13 +443,52 @@ class TableService
                         borders.shift();
                         stack.splice(mergeIndices[0],mergeIndices.length,toReduce);
                     }
+                    else
+                    {
+                        if(borders.length % 2 !== 0)
+                        {
+                            additionalBorderProcedure.isNeeded = true;
+                            reduction = false;
+                            stack.sort((a,b)=>a[a.length-1].tact-b[b.length-1].tact);
+                        }
+                    }
                 }
                 else{
                     if(stack.length>2){
                         stack.shift();
                     }
                 }
-                solved = true;
+                if(additionalBorderProcedure.isNeeded === false)
+                    solved = true;
+            }
+            else if(additionalBorderProcedure.isNeeded)
+            {
+                currentPart = stack[additionalBorderProcedure.stackIndex];
+                let nextPartEnd = currentPart[currentPart.length-1].tact;
+                for(let i = currentPart.length-2;i>=0;i--)
+                {
+                    if(currentPart[i].tact !== nsuArray[nsuArray.length-1].tact)
+                    {
+                        if(!isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates) &&
+                            !isAnotherConflict(currentPart[i],nextPartEnd,currentPart,conflictingStates,false))
+                            {
+                                borders.push(currentPart[i].tact);
+                                additionalBorderProcedure.borderAdded = true;
+                                const firstPart = currentPart.slice(0, i+1)
+                                const secondPart = currentPart.slice(i+1);
+                                stack.splice(stack.indexOf(currentPart),1,firstPart,secondPart);
+                                break;
+                            }
+                    }
+                }
+                if(additionalBorderProcedure.borderAdded)
+                {
+                    solved = true;
+                }
+                else
+                {
+                    additionalBorderProcedure.stackIndex++;
+                }
             }
             else
             {
@@ -351,8 +503,8 @@ class TableService
                     index++;
                         if(index >= conflictingStates.length)
                         { 
-                           if(currentPart[currentPart.length-1].tact === nsuArray[nsuArray.length-1].tact)
-                           {
+                            if(currentPart[currentPart.length-1].tact === nsuArray[nsuArray.length-1].tact)
+                            {
                                 if(!endOfCycle)
                                 {
                                     endOfCycle = true;
@@ -375,13 +527,14 @@ class TableService
                 else
                 {
                     let {first,second} = whichStateComesFirst(state.tacts,currentPart);
-                    let tact = second - offset;
-                    let nsuVal = currentPart.find(n=>n.tact === tact);
+                    let tact = (mergeEndProcedure || second-offset < 0) ? 
+                        nsuArray[nsuArray.length-1-offset].tact : second - offset;
                     let nextPartEnd = currentPart[currentPart.length-1].tact;
+                    let nsuVal = currentPart.find(n=>n.tact === tact);
                     if(doubleBorderProcedure.isNeeded)
                     {
                         if(isNotConflictingState(currentPart,nextPartEnd,
-                            nsuVal,notConflictingStates) || isAnotherConflict(nsuVal,nextPartEnd,conflictingStates,true))
+                            nsuVal,notConflictingStates) || isAnotherConflict(nsuVal,nextPartEnd,currentPart,conflictingStates,true))
                             {
                                 borders.push(tact);
                                 if(!doubleBorderProcedure.firstBorder.set)
@@ -407,13 +560,14 @@ class TableService
                     else
                     {
                         if(!isNotConflictingState(currentPart,nextPartEnd,
-                            nsuVal,notConflictingStates) && !isAnotherConflict(nsuVal,nextPartEnd,conflictingStates,borders.length===0)){
+                            nsuVal,notConflictingStates) && !isAnotherConflict(nsuVal,nextPartEnd,currentPart,conflictingStates,borders.length===0)){
                             borders.push(tact);
                             offset = 1;
                             const firstPart = currentPart.slice(0, currentPart.indexOf(nsuVal)+1)
                             const secondPart = currentPart.slice(currentPart.indexOf(nsuVal)+1);
                             stack.splice(stack.indexOf(currentPart),1,firstPart,secondPart);
                             if(endOfCycle){
+                                mergeEndProcedure = false;
                                 reduction = true;
                                 endOfCycle = false;
                             }
@@ -421,10 +575,21 @@ class TableService
                         }
                         else{
                             offset++;
-                            if(currentPart.findIndex(a=>a.tact === second-offset) < currentPart.findIndex(a=>a.tact === first))
+                            if(second-offset >= 0)
                             {
-                                doubleBorderProcedure.isNeeded = true;
-                                offset = 1;
+                                if(currentPart.findIndex(a=>a.tact === second-offset) <= currentPart.findIndex(a=>a.tact === first))
+                                {
+                                    doubleBorderProcedure.isNeeded = true;
+                                    offset = 1;
+                                }
+                            }
+                            else
+                            {
+                                if(endOfCycle)
+                                {
+                                    mergeEndProcedure = true;
+                                    offset = 1;
+                                }
                             }
                         }
                     }
@@ -444,13 +609,12 @@ class TableService
    {
        let newDependencies = [...dependencies];
        let useOneSignal = borders.length === 2;
-
        if(useOneSignal)
        {
             newDependencies.push({tact: borders[0]+0.5,label: 'Z0',type:'rising'});
             newDependencies.push({tact: borders[1]+0.5,label: 'Z0',type:'falling'});
             newDependencies.sort((a,b) => a.tact - b.tact);
-            return {dependencies:newDependencies,tacts:newDependencies.length,labels:[{label:'Z0'}]};
+            return {dependencies:newDependencies,tacts:newDependencies.length,labels:[{label:'Z0',signalChanges:['-','+','-']}],indices:[1,2]};
        }
        else{
             const indexedParts = parts.map((p,i)=> ({index:i+1,part: p}));
@@ -466,13 +630,14 @@ class TableService
                 }
             }
 
-            const {indices} = partCount(indexedParts);
+            const {indices,repeats} = partCount(indexedParts);
 
+            
             let signalAmount = indices.length > 2 ? Math.ceil(Math.sqrt(indices.length)) : 1;
             useOneSignal = signalAmount === 1;
             let count = 0;
             let signals = [];
-            signalLabels('additional',signalAmount).forEach(s=>signals.push({label:s,working:false}));
+            signalLabels('additional',signalAmount).forEach(s=>signals.push({label:s,working:false,signalChanges:['-']}));
             let signalFlag = false;
             indexedParts.forEach(i=>
                 {
@@ -484,10 +649,13 @@ class TableService
                     let signal = signalFlag ? signals.find(s=>s.working) : signals.find(s=>!s.working);
                     newDependencies.push({tact: i.part[i.part.length-1].tact+0.5,label: signal.label,
                         type: signal.working ? 'falling' : 'rising'});
+                    
+                    signal.working ? signal.signalChanges.push('-') : signal.signalChanges.push('+');
+                    updateCodedSignals(signal,signals);
                     signal.working = !signal.working;
-                    count++;
                     if(useOneSignal)
                     {
+                        count++;
                         if(count >= 2)
                         {
                             count = 0;
@@ -496,7 +664,7 @@ class TableService
                     }
                 });
             newDependencies.sort((a,b)=> a.tact - b.tact);
-            return {dependencies: newDependencies,tacts: newDependencies.length,labels:signals}
+            return {dependencies: newDependencies,tacts: newDependencies.length,labels:signals,indices}
        }
    }
 

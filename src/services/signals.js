@@ -13,7 +13,10 @@ function findMaxLength(arr)
         {
             lengthArray.push(a.data.length);
         });
-    return Math.max.apply(null,lengthArray);
+
+    const max =  Math.max.apply(null,lengthArray);
+    const label = arr.find(a=>a.data.length === max).label;
+    return {max,label};
 }
 
 class SignalService
@@ -51,25 +54,35 @@ class SignalService
         const currentMaxLength = findMaxLength(signalArray);
         if(!undo)
         {
-            if(currentMaxLength > data.length)
+            if(currentMaxLength.max > 1)
             {
-                return signalArray;
+                if(currentMaxLength.max > data.length)
+                {
+                    return signalArray;
+                }
+                else
+                {
+                    for(let i = 0; i < signalArray.length;i++)
+                    {
+                        if(signalArray[i].label !== label)
+                        {
+                            const currLength = signalArray[i].data.length;
+                            if(currLength > 0)
+                            {
+                                const diff = data.length - currLength;
+                                const lastElem = signalArray[i].data[currLength-1];
+                                for(let j=1;j<=diff;j++)
+                                {
+                                    signalArray[i].data.push({x:lastElem.x + j, y:lastElem.y});
+                                }
+                            }
+                        }
+                    }
+                    return signalArray;
+                }
             }
             else
             {
-                for(let i = 0; i < signalArray.length;i++)
-                {
-                    if(signalArray[i].label !== label)
-                    {
-                        const currLength = signalArray[i].data.length;
-                        const diff = data.length - currLength;
-                        const lastElem = signalArray[i].data[currLength-1];
-                        for(let j=1;j<=diff;j++)
-                        {
-                            signalArray[i].data.push({x:lastElem.x + j, y:lastElem.y});
-                        }
-                    }
-                }
                 return signalArray;
             }
         }
@@ -89,6 +102,90 @@ class SignalService
             });
             return signalArray;
         }
+    }
+
+    static fillWithStartState(inArrays,outArrays,length,dominating)
+    {
+        // eslint-disable-next-line no-debugger
+        debugger;
+        let updatedLength;
+        if(dominating === 'in')
+        {
+            inArrays.forEach(i=>
+                {
+                    const arrLength = i.data.length;
+                    const diff = length-arrLength;
+                    const lastElem = i.data[arrLength-1];
+                    if(diff===0 && lastElem.y !== i.data[0].y)
+                    {
+                        i.data.push({x:lastElem.x+1,y:i.data[0].y});
+                        this.ContinueSignal(inArrays,i.data,i.label,false);
+                    }
+                    for(let j = 0; j < diff;j++)
+                    {
+                        i.data.push({x:lastElem.x+1,y:i.data[0].y});
+                    }
+                });
+        
+                updatedLength = findMaxLength([...inArrays,...outArrays]);
+
+                outArrays.forEach(o=>
+                {
+                    const arrLength = o.data.length;
+                    const diff = updatedLength.max-arrLength;
+                    const lastElem = o.data[arrLength-1];
+                    if(diff===0 && lastElem.y !== o.data[0].y)
+                    {
+                        o.data.push({x:lastElem.x+1,y:o.data[0].y});
+                        this.ContinueSignal(inArrays,o.data,o.label,false);
+                    }
+                    for(let i = 0; i < diff;i++)
+                    {
+                    o.data.push({x:lastElem.x+1,y:o.data[0].y});
+                    }
+                });
+        
+        }
+        else
+        {
+            outArrays.forEach(o=>
+                {
+                    const arrLength = o.data.length;
+                    const diff = length-arrLength;
+                    const lastElem = o.data[arrLength-1];
+                    if(diff===0 && lastElem.y !== o.data[0].y)
+                    {
+                        o.data.push({x:lastElem.x+1,y:o.data[0].y});
+                        this.ContinueSignal(inArrays,o.data,o.label,false);
+                    }
+                    for(let i = 0; i < diff;i++)
+                    {
+                    o.data.push({x:lastElem.x+1,y:o.data[0].y});
+                    }
+                });
+
+            updatedLength = findMaxLength([...inArrays,...outArrays]);
+
+
+            inArrays.forEach(i=>
+                {
+                    const arrLength = i.data.length;
+                    const diff = updatedLength.max-arrLength;
+                    const lastElem = i.data[arrLength-1];
+                    if(diff===0 && lastElem.y !== i.data[0].y)
+                    {
+                        i.data.push({x:lastElem.x+1,y:i.data[0].y});
+                        this.ContinueSignal(inArrays,i.data,i.label,false);
+                    }
+                    for(let j = 0; j < diff;j++)
+                    {
+                        i.data.push({x:lastElem.x+1,y:i.data[0].y});
+                    }
+                });
+        }
+
+
+        return {inArrays,outArrays,updatedLength:updatedLength.max};
     }
 }
 

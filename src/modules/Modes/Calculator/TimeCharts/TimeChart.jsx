@@ -10,12 +10,12 @@ import { options} from './options';
 
 
 
-const TimeChart = ({label,sigType}) => 
+const TimeChart = ({label,sigType,disabled}) => 
 {
 
     const {inArrays,outArrays, updateArray, arrayChanged } = useContext(SignalContext);
-    const [data,setData] = useState([{x:0,y:0},{x:1,y:0}]);
-    const [xVal,setXVal] = useState(2);
+    const [data,setData] = useState([/*{x:0,y:0},{x:1,y:0}*/]);
+    const [xVal,setXVal] = useState(0);
     const [series,setSeries] = useState([{name:'',data: data}]);
     const [maxTicks,setMaxTicks] = useState(10);
 
@@ -24,10 +24,7 @@ const TimeChart = ({label,sigType}) =>
     {
         if(event.button === 0)
         {
-            if(dataPointIndex > 1)
-                setXVal(dataPointIndex);
-            else
-                displayNotification('error','Błąd','Próba ustawienia markera w niedozwolonym miejscu')
+            setXVal(dataPointIndex);
         }
     }
 
@@ -43,6 +40,15 @@ const TimeChart = ({label,sigType}) =>
         if(xVal > maxTicks)
         {
             const ratio = parseInt(Math.round(xVal/10));
+            setMaxTicks(10 * ratio + 5);
+        }
+        else if(xVal < 10)
+        {
+            setMaxTicks(10);
+        }
+        else if(xVal < maxTicks - 5)
+        {
+            const ratio = parseInt(Math.round((xVal-1)/10));
             setMaxTicks(10 * ratio + 5);
         }
     },[xVal,arrayChanged]);
@@ -93,6 +99,9 @@ const TimeChart = ({label,sigType}) =>
                                     needUpdating = true;
                                 }
                             }
+                        }
+                        else{
+                            needUpdating = true;
                         }
                         if(dataArr.length !== 0 && needUpdating){
                             setData(dataArr);
@@ -169,16 +178,16 @@ const TimeChart = ({label,sigType}) =>
 
     const onClearButtonClick = () =>
     {
-        setData([{x:0,y:0},{x:1,y:0}]);
-        updateArray({data: [{x:0,y:0},{x:1,y:0}],label,sigType},false);
-        setXVal(2);
-        setSeries([{data: [{x:0,y:0},{x:1,y:0}]}]);
+        setData([]);
+        updateArray({data: [],label,sigType},false);
+        setXVal(0);
+        setSeries([{data: []}]);
         setMaxTicks(10);
     }
 
     const onUndoButtonClick = () =>
     {
-        if(data.length > 2)
+        if(data.length >= 1)
         {
             const newData = [...data];
 
@@ -192,24 +201,21 @@ const TimeChart = ({label,sigType}) =>
             }
             updateArray({data: newData,label,sigType},true);
             setXVal(xVal-1);
-            if(xVal < 10){
-                setMaxTicks(10);
-            }
             setSeries([{data: newData}]);
             setData(newData);
         }
     }
 
     return (
-        <Card bordered={false} className='card' style={{ maxHeight:120,boxShadow:'none',alignItems:'stretch',padding:'5 0',width:'100%'}}> 
+        <Card bordered={false} className='card' style={{ maxHeight:90,boxShadow:'none',alignItems:'center',padding:'0 0',width:'100%'}}> 
             <div style={{display:'flex',flex: '0 0 40%',alignItems:'center'}}>
-                <Chart series={series} options={chartOptions} height={115} width={320} type='line'/>
+                <Chart series={series} options={chartOptions} height={85} width={320} type='line'/>
             </div>
-            <div style={{flex: '0 0 10%',display:'flex',flexDirection:'column',alignItems:'center',maxHeight: 90}}>
-                <Button icon={<ArrowUpOutlined/>} onClick={onUpButtonClick}/>
-                <Button icon={<ArrowDownOutlined/>} onClick={onDownButtonClick}/>
-                <Button icon={<CloseOutlined/>} onClick={onClearButtonClick}/>
-                <Button icon={<UndoOutlined/>} onClick={onUndoButtonClick}/>
+            <div style={{flex: '0 0 10%',display:'flex',flexDirection:'column',alignItems:'center',maxHeight: 60}}>
+                <Button disabled={disabled}  size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<ArrowUpOutlined/>} onClick={onUpButtonClick}/>
+                <Button disabled={disabled} size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<ArrowDownOutlined/>} onClick={onDownButtonClick}/>
+                <Button disabled={disabled} size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<CloseOutlined/>} onClick={onClearButtonClick}/>
+                <Button disabled={disabled} size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<UndoOutlined/>} onClick={onUndoButtonClick}/>
             </div>
         </Card>
     );

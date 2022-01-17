@@ -2,6 +2,7 @@ import React from 'react';
 import { MODES } from '../../utils';
 import { Empty } from 'antd';
 import Calculator from './Calculator';
+import ArticlePage from './ArticlePage';
 
 const Modes = ({modeId}) =>
 {
@@ -12,7 +13,7 @@ const Modes = ({modeId}) =>
         case MODES.HuffmanTheory:
             return (<Empty description='Tu bedzie teoria z Huffmana'/>);
         case MODES.SequentialTheory:
-            return (<Empty description='Tu bedzie teoria z ukladow sekwencyjnych'/>);
+            return (<ArticlePage path={'/Układy sekwencyjne.pdf'}/>);
         case MODES.SiwinskiCalculate:
             return (<Calculator/>);
         case MODES.SiwinskiExamples:

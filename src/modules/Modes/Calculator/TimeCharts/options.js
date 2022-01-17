@@ -54,12 +54,23 @@ export const options =
         xaxis: {
             type: 'numeric',
             tickPlacement: 'between',
+            min:0,
             labels: {
-                show: false,
+                show: true,
+                maxHeight: 20,
+                style:{
+                    fontSize: '7px'
+                },
+                offsetY: -8,
+                formatter: function (value) {
+                    return Number.parseInt(value); // The formatter function overrides format property
+                  }, 
             },
             title:
             {
                 text: 't',
+                offsetY: -50,
+                offsetX: 145
             },
             axisBorder: {
                 show: true,

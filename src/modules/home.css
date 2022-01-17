@@ -12,7 +12,6 @@
 }
 
 .panel-main-card {
-  height: calc(100% - 32px);
   min-height: 850px;
   width: 100%;
   box-sizing: 'border-box';

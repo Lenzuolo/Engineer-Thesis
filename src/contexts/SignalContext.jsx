@@ -53,9 +53,7 @@ const SignalContextProvider = ({children}) =>
     },[state]);
 
 
-    const updateArray = useCallback(({data,label,sigType},undo)=>{
-        
-        
+    const updateArray = useCallback(({data,label,sigType},undo)=>{     
         let arrName;
         switch(sigType)
         {
@@ -81,7 +79,7 @@ const SignalContextProvider = ({children}) =>
                     return;
                 }
             });
-            signalArray = SignalService.ContinueSignal(signalArray,data,label,undo);
+            signalArray = SignalService.ContinueSignal(signalArray,data,label,undo,);
             localStorage.setItem(arrName,JSON.stringify(signalArray));
             const newState = {...state,[arrName]:signalArray,arrayChanged:!state.arrayChanged};
             setState(newState);
@@ -131,15 +129,30 @@ const SignalContextProvider = ({children}) =>
         if(state.inArrays.length !== signalsIn || 
             state.outArrays.length !== signalsOut)
             {
-                return false;
+                return {correct:false};
             }
         const signalArray = [...state.inArrays,...state.outArrays];
-        const length = findMaxLength(signalArray);
-        setState({...state,length:length});
-        if(length === 0){
-            return false;
+        if(signalArray.some(s=>s.data.length === 0)) return {correct:false}
+        const {max,label} = findMaxLength(signalArray);
+        if(max === 0){
+            return {correct:false};
         }
-        return {correct:signalArray.every(arr=> arr.data.length === length),length:length};
+        const {inArrays,outArrays,updatedLength} = SignalService.fillWithStartState(state.inArrays,state.outArrays,max,label.includes('X') ? 'in':'out');
+
+        localStorage.setItem('inArrays',JSON.stringify(inArrays));
+        localStorage.setItem('outArrays',JSON.stringify(outArrays));
+        const changed = !state.arrayChanged;
+
+        setState(prev=>{
+            let newState = prev;
+            newState.inArrays = inArrays;
+            newState.outArrays = outArrays;
+            newState.length = updatedLength;
+            newState.arrayChanged = changed;
+            return newState;
+        });
+
+        return {inArrays:inArrays,outArrays:outArrays,length:updatedLength,correct:true};
     },[state]);
 
     return (
