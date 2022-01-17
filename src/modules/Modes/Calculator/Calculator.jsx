@@ -42,13 +42,13 @@ const Calculator = () =>
         setMappedLabelsIn(labelsIn.map(li=>
             {
                 addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:li,sigType:'in'});
-                return <TimeChart key={li} label={li} sigType='in'/>
+                return <TimeChart disabled={disabled} key={li} label={li} sigType='in'/>
         }));
 
         setMappedLabelsOut(labelsOut.map(lo=>
             {
                 addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:lo,sigType:'out'});
-                return <TimeChart key={lo} label={lo} sigType='out'/>
+                return <TimeChart disabled={disabled} key={lo} label={lo} sigType='out'/>
             }));
 
     }
@@ -188,6 +188,7 @@ const Calculator = () =>
                                             return;
                                         }
                                         const {dependencies,nsuArray} = calculateTableValues(length,inArrays,outArrays);
+                                        setDisabled(true);
                                         checkSolvable({dependencyArray:dependencies,nsuArray},[],true);
                                         setStep(3);
                                     }}
