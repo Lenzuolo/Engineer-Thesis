@@ -24,7 +24,7 @@ const ArticlePage = ({path}) =>
                         style={{ height: '125vh' }}
                         data={process.env.PUBLIC_URL+path}
                         type="application/pdf">
-                        <embed src={process.env.PUBLIC_URL+path} type="application/pdf" />
+                        <embed title='Układy sekwencyjne' src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${process.env.PUBLIC_URL+path}`}/>
                     </object>
                 </div>
             </Card>

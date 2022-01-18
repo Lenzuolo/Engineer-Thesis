@@ -217,13 +217,13 @@ const Calculator = () =>
                                         {   solvable ? 
                                             <Button size='small' type='primary' onClick={()=>{
                                                 setStep(1);
+                                                setDisabled(false);
                                                 clearSignalContext();
                                             }}>
                                                 Powrót na początek
                                             </Button> :
                                             <Button size='small'type='primary' onClick={()=>{
                                                 setStep(4);
-                                                setDisabled(false);
                                                 solveTable();
                                             }}>
                                                 Rozwiąż TKŁ
