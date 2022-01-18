@@ -13,7 +13,7 @@ const MainPage = () =>
 
     return (
         <Layout style={{minHeight:'100vh'}}>
-            <Topbar/>
+            <Topbar setMode={setSelectedMode}/>
             <Layout>
                 <Sider style={{width:200,overflow:'auto',minHeight:850}}>
                     <Menu
@@ -22,6 +22,7 @@ const MainPage = () =>
                         style={{height:'100%',paddingTop:10}}
                         onClick={({key})=>setSelectedMode(key)}
                         defaultSelectedKeys={[selectedMode]}
+                        selectedKeys={[selectedMode]}
                     >
                         <Menu.Item key='Układy Sekwencyjne'>Układy Sekwencyjne</Menu.Item>
                         <SubMenu key='siwinski' title='Metoda Siwińskiego'>

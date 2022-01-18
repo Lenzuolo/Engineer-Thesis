@@ -6,7 +6,7 @@ import './ConnectionOrderTable.css';
 
 const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
 {
-    const {nsuArray,dependencyArray,initialState,borders,indices,additionalSignals} = useContext(TableContext);
+    const {nsuArray,dependencyArray,initialState,borders,indices,additionalSignals,conflictingStates} = useContext(TableContext);
     const [mappedCols,setMappedCols] = useState([]);
     const [mappedRows,setMappedRows] = useState([]);
     const [NSU, setNSU] = useState([]);
@@ -106,11 +106,16 @@ const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
     {
         const dep = initial ? initialState.dependencyArray : dependencyArray;
         const nsu = initial ? initialState.nsuArray : nsuArray;
+        const conf = initial ? initialState.conflictingStates : conflictingStates
 
         if(dep.length != 0)
         {
-            const mappedNsu = nsu.map(n=>
-                (<td key={n.tact}><b>{n.NSU}</b></td>)
+            const mappedNsu = nsu.map(n=>{
+                if(typeof conf.find(c=>c.value === n.NSU && c.tacts.includes(n.tact)) !== 'undefined')
+                    return (<td key={n.tact} style={{color:'red'}}><b>{n.NSU}</b></td>);
+                else
+                    return (<td key={n.tact}><b>{n.NSU}</b></td>);
+            }
             );
 
             setNSU(mappedNsu);
@@ -135,7 +140,7 @@ const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
 
     }
 
-    const generateData = (label) =>
+    const generateData = (label,outlet) =>
     {
         let data = [];
         const dep = initial ? initialState.dependencyArray : dependencyArray;

@@ -4,11 +4,11 @@ import './topbar.css'
 
 
 
-const Topbar = () => 
+const Topbar = ({setMode}) => 
 {
     return (
         <div className="topbar-main">
-            <img src={logo} className="topbar-logo" alt='Politechnika Śląska'/>
+            <img src={logo} className="topbar-logo" alt='Politechnika Śląska' onClick={()=>setMode('Układy Sekwencyjne')}/>
             <div className='topbar-title'>Moduł Nauczania Syntezy Układów Sekwencyjnych</div>
         </div>
     )
