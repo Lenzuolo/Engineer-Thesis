@@ -14,16 +14,17 @@ const TimeChart = ({label,sigType}) =>
 {
 
     const {inArrays,outArrays, updateArray, arrayChanged } = useContext(SignalContext);
-    const [data,setData] = useState([/*{x:0,y:0},{x:1,y:0}*/]);
+    const [data,setData] = useState([]);
     const [xVal,setXVal] = useState(0);
     const [series,setSeries] = useState([{name:'',data: data}]);
     const [maxTicks,setMaxTicks] = useState(10);
-
+    const [clicked, setClicked] = useState(false);
 
     function handleClick(event, chartContext, {dataPointIndex}) 
     {
         if(event.button === 0)
         {
+            setClicked(true);
             setXVal(dataPointIndex);
         }
     }
@@ -32,10 +33,17 @@ const TimeChart = ({label,sigType}) =>
         yaxis: {...options.yaxis,title:{text:label}},
             xaxis: {...options.xaxis,max:maxTicks,tickAmount:maxTicks},
                 chart:{...options.chart,events:{...options.chart.events,markerClick:handleClick}},
-                    annotations: {xaxis:[{x:xVal,borderColor:'#00f'
+                    annotations: {xaxis:[{x:(xVal === 0 || clicked) ? xVal : xVal-1,borderColor:'#00f'
                       }]}};
 
+    useEffect(()=>updateSignals());
+
     useEffect(()=>{
+        if(data.length > 0 && xVal === data[data.length-1].x)
+        {
+            setClicked(false);
+            setXVal(xVal+1);
+        }
         updateSignals();
         if(xVal > maxTicks)
         {
@@ -130,7 +138,7 @@ const TimeChart = ({label,sigType}) =>
         else
         {
             element.y = 1;
-            newX = newData[newData.length-1].x+1;
+            newX = element.x+1;
         }
 
         if(!updateArray({data: newData,label,sigType},false))
@@ -160,7 +168,7 @@ const TimeChart = ({label,sigType}) =>
         else
         {
             element.y = 0;
-            newX = newData[newData.length-1].x +1;
+            newX = element.x +1;
         }
 
         if(!updateArray({data: newData,label,sigType},false))

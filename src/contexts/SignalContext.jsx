@@ -1,4 +1,5 @@
 import React, { useCallback, useState} from 'react';
+import { useEffect } from 'react/cjs/react.development';
 import { findMaxLength, SignalService } from '../services';
 
 const defaultState = () =>(
@@ -7,6 +8,7 @@ const defaultState = () =>(
     outArrays: [],
     arrayChanged: false,
     length: 0,
+    signalsChecked: false
 });
 
 const SignalContext = React.createContext(defaultState());
@@ -118,6 +120,11 @@ const SignalContextProvider = ({children}) =>
         }
     };
 
+    const allSignalsInInitialState = ()=>{
+        let signals = [...state.inArrays,...state.outArrays];
+        return signals.every(s=>s.data.length > 0 ? s.data[0].y === s.data[s.data.length-1].y : false)
+    };
+
     const clearSignalContext = useCallback(()=>
     {
         localStorage.removeItem('inArrays');
@@ -129,7 +136,7 @@ const SignalContextProvider = ({children}) =>
         if(state.inArrays.length !== signalsIn || 
             state.outArrays.length !== signalsOut)
             {
-                return {correct:false};
+                return {correct:false,reason:'Błąd wykresów, spróbuj wyczyścić dane'};
             }
         const signalArray = [...state.inArrays,...state.outArrays];
 
@@ -163,7 +170,7 @@ const SignalContextProvider = ({children}) =>
 
 
     return (
-        <SignalContext.Provider value={{ ...state, addArray, updateArray, clearSignalContext, areSignalsCorrect, deleteArray}}>
+        <SignalContext.Provider value={{ ...state, addArray, updateArray, clearSignalContext, areSignalsCorrect, deleteArray,allSignalsInInitialState}}>
           {children}
         </SignalContext.Provider>
       );

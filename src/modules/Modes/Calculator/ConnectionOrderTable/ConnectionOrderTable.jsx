@@ -147,6 +147,7 @@ const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
         const dep = initial ? initialState.dependencyArray : dependencyArray;
 
         const filtered = dep.filter(d=> d.tact === 0);
+        arrowStart=filtered.some(f=>f.label === label);
 
         dep.forEach((da,i) =>{
             if(i !== dep.length-1)

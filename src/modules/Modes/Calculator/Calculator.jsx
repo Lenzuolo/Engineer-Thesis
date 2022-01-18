@@ -15,9 +15,23 @@ const Calculator = () =>
     const [signalsOut,setSignalsOut] = useState(1);
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
-    const {clearSignalContext,areSignalsCorrect,addArray,deleteArray} = React.useContext(SignalContext);
+    const {clearSignalContext,areSignalsCorrect,addArray,deleteArray,allSignalsInInitialState} = React.useContext(SignalContext);
     const {checkSolvable,calculateTableValues,solvable,solveTable,calculationStatus,clearTableContext} = useContext(TableContext);
     const [disabled,setDisabled] = useState(false);
+    const [visible,setVisible] = useState(false);
+
+    const onConfirm = () =>{
+        const {length,inArrays,outArrays,correct,reason} = areSignalsCorrect(signalsIn,signalsOut);
+        if(!correct)
+        {
+            displayNotification('error','Błąd',reason);
+            return;
+        }
+        const {dependencies,nsuArray} = calculateTableValues(length,inArrays,outArrays);
+        checkSolvable({dependencyArray:dependencies,nsuArray},[],true);
+        setDisabled(true);
+        setStep(3);
+    }
 
     const onFinish = ({sigIn,sigOut}) =>
     {
@@ -177,20 +191,20 @@ const Calculator = () =>
                                     title='Uwaga! Kliknięcie dalej spowoduje automatyczne uzupelnienie sygnałów do stanu początkowego. Kontynuować?' 
                                     okText="Tak"
                                     cancelText="Nie"
-                                    icon={<QuestionCircleOutlined style={{ color: 'orange' }} />}
-                                    onCancel={()=>{}}
-                                    onConfirm={()=>{
-                                        const {length,inArrays,outArrays,correct,reason} = areSignalsCorrect(signalsIn,signalsOut);
-                                        if(!correct)
+                                    visible={visible}
+                                    onVisibleChange={(visible)=>{
+                                        if(!allSignalsInInitialState())
                                         {
-                                            displayNotification('error','Błąd',reason);
-                                            return;
+                                            setVisible(visible);
                                         }
-                                        const {dependencies,nsuArray} = calculateTableValues(length,inArrays,outArrays);
-                                        checkSolvable({dependencyArray:dependencies,nsuArray},[],true);
-                                        setDisabled(true);
-                                        setStep(3);
+                                        else{
+                                            onConfirm();
+                                        }
+
                                     }}
+                                    icon={<QuestionCircleOutlined style={{ color: 'orange' }}/>}
+                                    onCancel={()=>{}}
+                                    onConfirm={onConfirm}
                                 >
                                     <Button size='small' type='primary'>
                                         Dalej
@@ -207,12 +221,12 @@ const Calculator = () =>
                             </div>
                             {step === 3 && (
                                 <div style={{display:'flex',justifyContent:'center', padding: 20}}>
-                                    <div style={{display:'flex',justifyContent:'space-around',minWidth: 200}}>
+                                    <div style={{display:'flex',justifyContent:'space-around',minWidth: 300}}>
                                         <Button size='small' type='default' onClick={()=>{
                                         setStep(2);
                                         setDisabled(false);
                                         }}>
-                                        Powrót
+                                        Edycja przebiegów
                                         </Button>
                                         {   solvable ? 
                                             <Button size='small' type='primary' onClick={()=>{
@@ -247,7 +261,7 @@ const Calculator = () =>
                             {step === 4 && (
                             <div style={{display:'flex',justifyContent:'center', padding: 20}}>
                                 <div style={{display:'flex',justifyContent:'center',minWidth: 250}}>
-                                    <Button type='primary' onClick={()=>{
+                                    <Button size='small' type='primary' onClick={()=>{
                                     setStep(5);
                                 }}>
                                     Wygeneruj TKŁ
@@ -269,8 +283,15 @@ const Calculator = () =>
                                 <ConnectionOrderTable initial={false} signalsIn={signalsIn} signalsOut={signalsOut}/>
                             </div>
                             <div style={{display:'flex',justifyContent:'center', padding: 20}}>
-                                <div style={{display:'flex',justifyContent:'center',minWidth: 250}}>
-                                    <Button type='primary' onClick={()=>{
+                                <div style={{display:'flex',justifyContent:'space-around',minWidth: 250}}>
+                                    <Button size='small' type='primary' style={{marginRight:5}} onClick={()=>{
+                                        setStep(2);
+                                        setDisabled(false);
+                                        clearTableContext();
+                                    }}>
+                                        Edycja przebiegów
+                                    </Button>
+                                    <Button size='small' type='primary' onClick={()=>{
                                     setStep(1);
                                     setDisabled(false);
                                     clearSignalContext();
