@@ -106,8 +106,6 @@ class SignalService
 
     static fillWithStartState(inArrays,outArrays,length,dominating)
     {
-        // eslint-disable-next-line no-debugger
-        debugger;
         let updatedLength;
         if(dominating === 'in')
         {
@@ -186,6 +184,35 @@ class SignalService
 
 
         return {inArrays,outArrays,updatedLength:updatedLength.max};
+    }
+
+    static isSequentialCircuit(inArray,outArray,length)
+    {
+        let isSequentialCircuit = false;
+        const states = []
+        for(let i = 0; i<length;i++)
+        {
+            let inState = [], outState = [];
+            inArray.forEach(n=>{
+                inState.push(n.data[i].y.toString());
+            });
+            outArray.forEach(n=>{
+                outState.push(n.data[i].y.toString());
+            })
+
+            states.push({state:i,in:inState.join(''),out:outState.join('')});
+        }
+        // eslint-disable-next-line no-debugger
+        debugger;
+        states.forEach(s=>{
+            const filtered = states.filter(f=>f.in === s.in);
+            if(filtered.some(f=> f.out !== s.out))
+            {
+                isSequentialCircuit = true;
+            }
+        })
+
+        return isSequentialCircuit;
     }
 }
 

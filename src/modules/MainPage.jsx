@@ -9,7 +9,7 @@ const { SubMenu } = Menu;
 
 const MainPage = () =>
 {
-    const [selectedMode,setSelectedMode] = useState();
+    const [selectedMode,setSelectedMode] = useState('Kalkulator TKŁ');
 
     return (
         <Layout style={{minHeight:'100vh'}}>
@@ -21,6 +21,7 @@ const MainPage = () =>
                         mode='inline'
                         style={{height:'100%',paddingTop:10}}
                         onClick={({key})=>setSelectedMode(key)}
+                        defaultSelectedKeys={[selectedMode]}
                     >
                         <Menu.Item key='Układy Sekwencyjne'>Układy Sekwencyjne</Menu.Item>
                         <SubMenu key='siwinski' title='Metoda Siwińskiego'>

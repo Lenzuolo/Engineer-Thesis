@@ -10,7 +10,7 @@ import { options} from './options';
 
 
 
-const TimeChart = ({label,sigType,disabled}) => 
+const TimeChart = ({label,sigType}) => 
 {
 
     const {inArrays,outArrays, updateArray, arrayChanged } = useContext(SignalContext);
@@ -212,10 +212,10 @@ const TimeChart = ({label,sigType,disabled}) =>
                 <Chart series={series} options={chartOptions} height={85} width={320} type='line'/>
             </div>
             <div style={{flex: '0 0 10%',display:'flex',flexDirection:'column',alignItems:'center',maxHeight: 60}}>
-                <Button disabled={disabled}  size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<ArrowUpOutlined/>} onClick={onUpButtonClick}/>
-                <Button disabled={disabled} size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<ArrowDownOutlined/>} onClick={onDownButtonClick}/>
-                <Button disabled={disabled} size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<CloseOutlined/>} onClick={onClearButtonClick}/>
-                <Button disabled={disabled} size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<UndoOutlined/>} onClick={onUndoButtonClick}/>
+                <Button  size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<ArrowUpOutlined/>} onClick={onUpButtonClick}/>
+                <Button  size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<ArrowDownOutlined/>} onClick={onDownButtonClick}/>
+                <Button  size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<CloseOutlined/>} onClick={onClearButtonClick}/>
+                <Button  size='small' style={{display:'flex',height:'25%',justifyContent:'center',marginBottom:3}} icon={<UndoOutlined/>} onClick={onUndoButtonClick}/>
             </div>
         </Card>
     );

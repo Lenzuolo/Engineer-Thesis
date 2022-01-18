@@ -396,14 +396,15 @@ class TableService
         let reduction = false;
         let mergeEndProcedure = false;
         let additionalBorderProcedure = {isNeeded: false, borderAdded: false, stackIndex:0};
-        let doubleBorderProcedure = {isNeeded:false, firstBorder: {set: false, index: -1}};
+        let doubleBorderProcedure = {isNeeded:false, firstBorder: {set: false, index: -1,tact:-1}};
         let currentPart;
         let index = 0;
         let offset = 1;
         let borders = [];
         let arr = [...conflictingStates];
         let stack = [[...nsuArray]];
-
+        // eslint-disable-next-line no-debugger
+        debugger;
         while(!solved)
         {
             if(reduction)
@@ -528,8 +529,10 @@ class TableService
                 {
                     let {first,second} = whichStateComesFirst(state.tacts,currentPart);
                     let tact = (mergeEndProcedure || second-offset < 0) ? 
-                        nsuArray[nsuArray.length-1-offset].tact : second - offset;
-                    let nextPartEnd = currentPart[currentPart.length-1].tact;
+                        nsuArray[nsuArray.length-offset-(doubleBorderProcedure.isNeeded ? 0 : 1)].tact : second - offset;
+                    let nextPartEnd = doubleBorderProcedure.firstBorder.set ? 
+                        doubleBorderProcedure.firstBorder.tact : 
+                            currentPart[currentPart.length-1].tact;
                     let nsuVal = currentPart.find(n=>n.tact === tact);
                     if(doubleBorderProcedure.isNeeded)
                     {
@@ -541,7 +544,11 @@ class TableService
                                 {
                                     doubleBorderProcedure.firstBorder.set = true;
                                     doubleBorderProcedure.firstBorder.index = currentPart.indexOf(nsuVal)+1;
-                                    offset++;
+                                    doubleBorderProcedure.firstBorder.tact = tact;
+                                    if(second-offset >= 0)
+                                    {
+                                        offset++;
+                                    }
                                 }
                                 else
                                 {
@@ -552,6 +559,11 @@ class TableService
                                     const thirdPart = currentPart.slice(doubleBorderProcedure.firstBorder.index);
                                     stack.splice(partIndex,1,firstPart,secondPart,thirdPart);
                                     doubleBorderProcedure = {isNeeded: false, firstBorder: {set:false,index:-1}};
+                                    if(endOfCycle)
+                                    {
+                                        reduction = true;
+                                        endOfCycle = false;
+                                    }
                                     offset = 1;
                                     index = 0;
                                 }
@@ -587,8 +599,15 @@ class TableService
                             {
                                 if(endOfCycle)
                                 {
-                                    mergeEndProcedure = true;
-                                    offset = 1;
+                                    offset=1;
+                                    if(currentPart.findIndex(a=>a.tact === nsuArray[nsuArray.length-1]) <= currentPart.findIndex(a=>a.tact === first))
+                                    {
+                                        doubleBorderProcedure.isNeeded = true;
+                                    }
+                                    else
+                                    {
+                                        mergeEndProcedure = true;
+                                    }
                                 }
                             }
                         }

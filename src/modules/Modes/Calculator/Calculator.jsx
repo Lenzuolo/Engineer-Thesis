@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Form,InputNumber,Button,Card,Spin, Popconfirm} from 'antd';
 import { signalLabels, STATUS, MAX_SIGNALS } from '../../../utils';
 import { ConnectionOrderTable } from './ConnectionOrderTable';
@@ -13,17 +13,16 @@ const Calculator = () =>
     const [step,setStep] = useState(1);
     const [signalsIn,setSignalsIn] = useState(1);
     const [signalsOut,setSignalsOut] = useState(1);
-    const [disabled,setDisabled] = useState(false);
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
     const {clearSignalContext,areSignalsCorrect,addArray,deleteArray} = React.useContext(SignalContext);
-    const {checkSolvable,calculateTableValues,solvable,solveTable,calculationStatus,additionalSignals,clearTableContext} = useContext(TableContext);
-
+    const {checkSolvable,calculateTableValues,solvable,solveTable,calculationStatus,clearTableContext} = useContext(TableContext);
+    const [disabled,setDisabled] = useState(false);
 
     const onFinish = ({sigIn,sigOut}) =>
     {
 
-        if(sigOut > sigIn)
+        if(sigOut > 2*sigIn)
         {
             displayNotification('error','Błąd','Niedozwolona ilość sygnałów wyjściowych. Prawdopodobnie podano większą wartość niż ilość sygnałów wejściowych');
             return;
@@ -42,13 +41,13 @@ const Calculator = () =>
         setMappedLabelsIn(labelsIn.map(li=>
             {
                 addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:li,sigType:'in'});
-                return <TimeChart disabled={disabled} key={li} label={li} sigType='in'/>
+                return <TimeChart  key={li} label={li} sigType='in'/>
         }));
 
         setMappedLabelsOut(labelsOut.map(lo=>
             {
                 addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:lo,sigType:'out'});
-                return <TimeChart disabled={disabled} key={lo} label={lo} sigType='out'/>
+                return <TimeChart  key={lo} label={lo} sigType='out'/>
             }));
 
     }
@@ -64,7 +63,7 @@ const Calculator = () =>
                 const labels = [...mappedLabelsIn];
                 const arr = signalLabels('in',signals+1);
                 const label = arr[arr.length-1];
-                labels.push(<TimeChart disabled={disabled} key={label} label={label} sigType='in'/>);
+                labels.push(<TimeChart key={label} label={label} sigType='in'/>);
                 addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:label,sigType:'in'});
                 setMappedLabelsIn(labels); 
             }
@@ -75,7 +74,7 @@ const Calculator = () =>
                 const labels = [...mappedLabelsOut];
                 const arr = signalLabels('out',signals+1);
                 const label = arr[arr.length-1];
-                labels.push(<TimeChart disabled={disabled} key={label} label={label} sigType='out'/>);
+                labels.push(<TimeChart key={label} label={label} sigType='out'/>);
                 addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:label,sigType:'out'});
                 setMappedLabelsOut(labels); 
             };
@@ -141,11 +140,11 @@ const Calculator = () =>
                     <CustomText strong size={14} style={{marginBottom:10}}>
                         Przyciski: ↑ powoduje sygnał dodatni, ↓ ujemny, × czyści wykres, a ↶ cofa zmianę.
                     </CustomText>
-                    <div style={{display:'flex',alignItems:'center',flexDirection:'column'}}>
+                    <div style={{display:'flex',alignItems:'center',flexDirection:'column',pointerEvents: disabled && 'none'}}>
                         <Card title='Sygnały Wejściowe' className='signalCard' bordered={false} style={{width: '40%',padding:'0 0'}}>
                             <div style={{display:'flex',justifyContent:'center'}}>
                                 <div style={{display:'flex',justifyContent:'space-around',width:'20%'}}>
-                                    {(signalsIn > 1 && signalsOut < signalsIn)&& <Button size='small' icon={<MinusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('delete','in')} />}
+                                    {(signalsIn > 1 && signalsOut <= 2*signalsIn)&& <Button size='small' icon={<MinusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('delete','in')} />}
                                     {signalsIn < MAX_SIGNALS && <Button size='small' icon={<PlusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('add','in')}/>}
                                 </div>
                             </div>
@@ -157,7 +156,7 @@ const Calculator = () =>
                             <div style={{display:'flex',justifyContent:'center'}}>
                                 <div style={{display:'flex',justifyContent:'space-around',width:'20%'}}>
                                     {signalsOut > 1 && <Button size='small' icon={<MinusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('delete','out')} />}
-                                    {(signalsOut < MAX_SIGNALS && signalsOut < signalsIn) && <Button size='small' icon={<PlusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('add','out')}/>}
+                                    {(signalsOut < MAX_SIGNALS && signalsOut <= 2*signalsIn) && <Button size='small' icon={<PlusCircleOutlined/>} shape='circle' onClick={()=>handleChartButton('add','out')}/>}
                                 </div>
                             </div>
                             {
@@ -167,7 +166,7 @@ const Calculator = () =>
                     </div>
                     {step === 2 && (
                         <div style={{display:'flex',justifyContent:'center'}}>
-                            <div style={{display:'flex',justifyContent:'space-around',minWidth: 250}}>
+                            <div style={{display:'flex',justifyContent:'space-evenly',minWidth: 200}}>
                                 <Button size='small' type='primary' onClick={()=>{
                                 setStep(1);
                                 clearSignalContext();
@@ -181,15 +180,15 @@ const Calculator = () =>
                                     icon={<QuestionCircleOutlined style={{ color: 'orange' }} />}
                                     onCancel={()=>{}}
                                     onConfirm={()=>{
-                                        const {length,inArrays,outArrays,correct} = areSignalsCorrect(signalsIn,signalsOut);
+                                        const {length,inArrays,outArrays,correct,reason} = areSignalsCorrect(signalsIn,signalsOut);
                                         if(!correct)
                                         {
-                                            displayNotification('error','Błąd','Wystąpił błąd, prawdobodobnie wystąpił wykres bez żadnych sygnałów');
+                                            displayNotification('error','Błąd',reason);
                                             return;
                                         }
                                         const {dependencies,nsuArray} = calculateTableValues(length,inArrays,outArrays);
-                                        setDisabled(true);
                                         checkSolvable({dependencyArray:dependencies,nsuArray},[],true);
+                                        setDisabled(true);
                                         setStep(3);
                                     }}
                                 >
@@ -208,21 +207,23 @@ const Calculator = () =>
                             </div>
                             {step === 3 && (
                                 <div style={{display:'flex',justifyContent:'center', padding: 20}}>
-                                    <div style={{display:'flex',justifyContent:'center',minWidth: 250}}>
-                                        {/* <Button type='primary' onClick={()=>{
+                                    <div style={{display:'flex',justifyContent:'space-around',minWidth: 200}}>
+                                        <Button size='small' type='default' onClick={()=>{
                                         setStep(2);
+                                        setDisabled(false);
                                         }}>
                                         Powrót
-                                        </Button> */}
+                                        </Button>
                                         {   solvable ? 
-                                            <Button type='primary' onClick={()=>{
+                                            <Button size='small' type='primary' onClick={()=>{
                                                 setStep(1);
                                                 clearSignalContext();
                                             }}>
                                                 Powrót na początek
                                             </Button> :
-                                            <Button type='primary' onClick={()=>{
+                                            <Button size='small'type='primary' onClick={()=>{
                                                 setStep(4);
+                                                setDisabled(false);
                                                 solveTable();
                                             }}>
                                                 Rozwiąż TKŁ
@@ -271,6 +272,7 @@ const Calculator = () =>
                                 <div style={{display:'flex',justifyContent:'center',minWidth: 250}}>
                                     <Button type='primary' onClick={()=>{
                                     setStep(1);
+                                    setDisabled(false);
                                     clearSignalContext();
                                     clearTableContext();
                                 }}>

@@ -132,12 +132,18 @@ const SignalContextProvider = ({children}) =>
                 return {correct:false};
             }
         const signalArray = [...state.inArrays,...state.outArrays];
-        if(signalArray.some(s=>s.data.length === 0)) return {correct:false}
+
+        if(signalArray.some(s=>s.data.length === 0)) return {correct:false,reason:'Niektóre wykresy nie posiadają wartości'}
         const {max,label} = findMaxLength(signalArray);
         if(max === 0){
-            return {correct:false};
+            return {correct:false,reason: 'Żadne wykresy nie posiadają wartości'};
         }
         const {inArrays,outArrays,updatedLength} = SignalService.fillWithStartState(state.inArrays,state.outArrays,max,label.includes('X') ? 'in':'out');
+
+        if(!SignalService.isSequentialCircuit(inArrays,outArrays,updatedLength))
+        {
+            return {correct: false, reason:'Układ nie jest układem sekwencyjnym'}
+        }
 
         localStorage.setItem('inArrays',JSON.stringify(inArrays));
         localStorage.setItem('outArrays',JSON.stringify(outArrays));
@@ -155,8 +161,9 @@ const SignalContextProvider = ({children}) =>
         return {inArrays:inArrays,outArrays:outArrays,length:updatedLength,correct:true};
     },[state]);
 
+
     return (
-        <SignalContext.Provider value={{ ...state, addArray, updateArray, clearSignalContext, areSignalsCorrect, deleteArray }}>
+        <SignalContext.Provider value={{ ...state, addArray, updateArray, clearSignalContext, areSignalsCorrect, deleteArray}}>
           {children}
         </SignalContext.Provider>
       );
