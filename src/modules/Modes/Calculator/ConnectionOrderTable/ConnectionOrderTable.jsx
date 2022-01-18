@@ -143,6 +143,7 @@ const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
     const generateData = (label,outlet) =>
     {
         let data = [];
+        let arrowStart = false
         const dep = initial ? initialState.dependencyArray : dependencyArray;
 
         const filtered = dep.filter(d=> d.tact === 0);
@@ -150,10 +151,23 @@ const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
         dep.forEach((da,i) =>{
             if(i !== dep.length-1)
             {
+                if(outlet)
+                {
+                    const elem = dep[i+1];
+                    if(elem.label === label)
+                    {
+                        if(elem.type === 'rising')
+                            arrowStart = true;
+                        else if(elem.type === 'falling')
+                            arrowStart = false;
+                    }
+                }                
                 if(da.label === label){
                     if(da.type === 'rising')
                     {
-                            data.push((<td key={da.tact}><b>+</b></td>));
+                            data.push((<td key={da.tact} style={{
+                                borderBottom: arrowStart && '5px solid #2c7436'
+                            }}><b>+</b></td>));
                     }
                     else if(da.type === 'falling')
                     {
@@ -164,13 +178,17 @@ const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
                 {
                     if(da.tact !== 0 )
                     {
-                        data.push((<td key={da.tact}><b></b></td>));
+                        data.push((<td key={da.tact} style={{
+                            borderBottom: arrowStart && '5px solid #2c7436'
+                        }}><b></b></td>));
                     }
                     else
                     {
                         if(!filtered.some(d=>d.label === label) && i===0)
                         {
-                            data.push((<td key={da.tact}><b>-</b></td>));
+                            data.push((<td key={da.tact} style={{
+                                borderBottom: arrowStart && '5px solid #2c7436'
+                            }}><b>-</b></td>));
                         }    
                     }
                 }
@@ -217,7 +235,7 @@ const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
                     <tr key={i}>
                         <th key='signal'>{`Q${j}`}</th>
                         <th key='state value'>2<sup>{`${i}`}</sup></th>
-                        {generateData(`Q${j}`)}
+                        {generateData(`Q${j}`,true)}
                     </tr>
                 )
             )
@@ -231,7 +249,7 @@ const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
                         <tr key={i}>
                             <th key='signal'>{`Z${j}`}</th>
                             <th key='state value'>2<sup>{`${i}`}</sup></th>
-                            {generateData(`Z${j}`)}
+                            {generateData(`Z${j}`,true)}
                         </tr>
                     )
                 )
