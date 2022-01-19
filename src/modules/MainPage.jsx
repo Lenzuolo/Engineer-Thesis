@@ -27,7 +27,7 @@ const MainPage = () =>
                         <Menu.Item key='Układy Sekwencyjne'>Układy Sekwencyjne</Menu.Item>
                         <SubMenu key='siwinski' title='Metoda Siwińskiego'>
                             <Menu.Item key='TKŁ - Teoria'>Teoria</Menu.Item>
-                            <Menu.Item key='TKŁ - Przykłady' disabled>Przykłady</Menu.Item>
+                            <Menu.Item key='TKŁ - Przykłady'>Przykłady</Menu.Item>
                             <Menu.Item key='Kalkulator TKŁ'>Kalkulator TKŁ</Menu.Item>
                         </SubMenu>
                         <SubMenu key='huffman' title='Metoda Huffmana'>

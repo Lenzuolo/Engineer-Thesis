@@ -17,9 +17,9 @@ const Modes = ({modeId}) =>
         case MODES.SiwinskiCalculate:
             return (<Calculator/>);
         case MODES.SiwinskiExamples:
-            return (<Empty description='Tu beda przyklady z TKŁ'/>);
+            return (<ArticlePage path={'/TKŁ - Przykłady.pdf'}/>);
         case MODES.SiwinskiTheory:
-            return (<Empty description='Tu będzie teoria z TKŁ'/>);
+            return (<ArticlePage path={'/TKŁ - Teoria.pdf'}/>);
         default:
             return (<Empty description='Wybrano niewłaściwą opcję'/>);
     }

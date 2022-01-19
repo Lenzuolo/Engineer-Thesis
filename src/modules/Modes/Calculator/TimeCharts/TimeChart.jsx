@@ -19,6 +19,7 @@ const TimeChart = ({label,sigType}) =>
     const [series,setSeries] = useState([{name:'',data: data}]);
     const [maxTicks,setMaxTicks] = useState(10);
     const [clicked, setClicked] = useState(false);
+    const [lastPoint,setLastPoint] = useState(false)
 
     function handleClick(event, chartContext, {dataPointIndex}) 
     {
@@ -33,7 +34,7 @@ const TimeChart = ({label,sigType}) =>
         yaxis: {...options.yaxis,title:{text:label}},
             xaxis: {...options.xaxis,max:maxTicks,tickAmount:maxTicks},
                 chart:{...options.chart,events:{...options.chart.events,markerClick:handleClick}},
-                    annotations: {xaxis:[{x:(xVal === 0 || clicked) ? xVal : xVal-1,borderColor:'#00f'
+                    annotations: {xaxis:[{x:(xVal === 0 || clicked || lastPoint) ? xVal : xVal-1,borderColor:'#00f'
                       }]}};
 
     useEffect(()=>updateSignals());
@@ -42,24 +43,24 @@ const TimeChart = ({label,sigType}) =>
         if(data.length > 0 && xVal === data[data.length-1].x)
         {
             setClicked(false);
-            setXVal(xVal+1);
+            setLastPoint(true);
         }
         updateSignals();
-        if(xVal > maxTicks)
+        if(data.length > maxTicks)
         {
             const ratio = parseInt(Math.round(xVal/10));
             setMaxTicks(10 * ratio + 5);
         }
-        else if(xVal < 10)
+        else if(data.length < 10)
         {
             setMaxTicks(10);
         }
-        else if(xVal < maxTicks - 5)
+        else if(data.length < maxTicks - 5)
         {
             const ratio = parseInt(Math.round((xVal-1)/10));
             setMaxTicks(10 * ratio + 5);
         }
-    },[xVal,arrayChanged]);
+    },[xVal,data.length,arrayChanged]);
 
     const updateSignals = () => {
         let newData;
@@ -127,6 +128,9 @@ const TimeChart = ({label,sigType}) =>
 
     const onUpButtonClick = () =>
     {
+        if(lastPoint){
+            setLastPoint(false);
+        }
         const newData = [...data];
         const element = newData.find((e)=>e.x === xVal);
         let newX;
@@ -156,6 +160,9 @@ const TimeChart = ({label,sigType}) =>
 
     const onDownButtonClick = () =>
     {
+        if(lastPoint){
+            setLastPoint(false);
+        }
         const newData = [...data];
 
         const element = newData.find((e)=>e.x === xVal);
@@ -198,13 +205,12 @@ const TimeChart = ({label,sigType}) =>
         if(data.length >= 1)
         {
             const newData = [...data];
-
-            const element = newData.findIndex((e)=>e.x === xVal-1);
-            if(element === newData.length-1)
+            if(lastPoint || data[data.length-1].x === xVal-1)
                 newData.pop();
             else
             {
-                displayNotification('error','Błąd','Cofanie z punktu wcześniejszego niż ostatni nie jest dozwolone');
+                setXVal(xVal-1);
+                //displayNotification('error','Błąd','Cofanie z punktu wcześniejszego niż ostatni nie jest dozwolone');
                 return;
             }
             updateArray({data: newData,label,sigType},true);

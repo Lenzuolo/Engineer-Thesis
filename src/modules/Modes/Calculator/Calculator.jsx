@@ -151,8 +151,9 @@ const Calculator = () =>
                         Proszę uzupełnić przebiegi czasowe. Jeżeli sygnał wejściowy wpływa bezpośrednio na sygnał wyjścia to zmiany
                         muszą być zaznaczone w tym samym punkcie na wykresach. Kliknięcie na punkt wykresu spowoduje przeniesienie wskaźnika.   
                     </CustomText>
-                    <CustomText strong size={14} style={{marginBottom:10}}>
-                        Przyciski: ↑ powoduje sygnał dodatni, ↓ ujemny, × czyści wykres, a ↶ cofa zmianę.
+                    <CustomText strong size={14} style={{marginBottom:5,lineHeight:1.3,textAlign:'center',whiteSpace:'pre-wrap'}}>
+                        {`Przyciski: ↑ powoduje sygnał dodatni, ↓ ujemny, × czyści wykres, a ↶ cofa zmianę.
+                        Kliknięcie na namalowaną linię wykresu spowoduje przeniesienie markera w dany punkt i możliwość jego edycji.`}
                     </CustomText>
                     <div style={{display:'flex',alignItems:'center',flexDirection:'column',pointerEvents: disabled && 'none'}}>
                         <Card title='Sygnały Wejściowe' className='signalCard' bordered={false} style={{width: '40%',padding:'0 0'}}>

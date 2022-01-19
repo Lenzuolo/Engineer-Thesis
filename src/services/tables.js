@@ -468,7 +468,7 @@ class TableService
                 let nextPartEnd = currentPart[currentPart.length-1].tact;
                 for(let i = currentPart.length-2;i>=0;i--)
                 {
-                    if(currentPart[i].tact !== nsuArray[nsuArray.length-1].tact)
+                    if(currentPart[i].tact !== nsuArray[nsuArray.length-1].tact && !borders.includes(currentPart[i].tact))
                     {
                         if(!isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates) &&
                             !isAnotherConflict(currentPart[i],nextPartEnd,currentPart,conflictingStates,false))
@@ -651,12 +651,21 @@ class TableService
 
             const {indices,repeats} = partCount(indexedParts);
 
-            
+            // eslint-disable-next-line no-debugger
+            debugger;
             let signalAmount = indices.length > 2 ? Math.ceil(Math.sqrt(indices.length)) : 1;
             useOneSignal = signalAmount === 1;
             let count = 0;
             let signals = [];
-            signalLabels('additional',signalAmount).forEach(s=>signals.push({label:s,working:false,signalChanges:['-']}));
+            signalLabels('additional',signalAmount).forEach((s,i)=>{
+                if(i === 0 && borders[0] === 0){
+                    signals.push({label:s,working:true,signalChanges:['+']});
+                    newDependencies.push({tact:0,label:s,type:'rising'});
+                }
+                else{
+                    signals.push({label:s,working:false,signalChanges:['-']});
+                } 
+            });
             let signalFlag = false;
             indexedParts.forEach(i=>
                 {
@@ -664,6 +673,11 @@ class TableService
                     if(allSignalsOn)
                     {
                         signalFlag = true;
+                    }
+                    else{
+                        if(signals.every(s=>!s.working)){
+                            signalFlag = false;
+                        }
                     }
                     let signal = signalFlag ? signals.find(s=>s.working) : signals.find(s=>!s.working);
                     newDependencies.push({tact: i.part[i.part.length-1].tact+0.5,label: signal.label,
