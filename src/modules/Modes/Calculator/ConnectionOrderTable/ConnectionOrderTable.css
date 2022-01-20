@@ -19,13 +19,14 @@ td{
 
 .borders
 {
-    border-style: solid hidden hidden solid;
+    border-style: solid none hidden solid;
     border-width: 1px;
 }
 
 .borders .notBordered
 {
-  border: 0px none transparent !important;
+  border-width: 0px !important;
+  border-style: none hidden none none !important;
   box-shadow: 3px 5px 1px 4px white !important;
 }
 

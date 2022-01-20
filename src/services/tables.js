@@ -221,6 +221,60 @@ function updateCodedSignals(signal,signals)
     return;
 }
 
+function createState(signals){
+    let state = [];
+    signals.forEach(s=>state.push({label:s.label,working:s.working}));
+    return state;
+}
+
+function whichSignalIsDifferent(prevState,state)
+{
+    for(let i = 0; i < state.states.length;i++)
+    {
+        if(prevState.states[i].working !== state.states[i].working){
+            return state.states[i].label;
+        }
+    }
+}
+
+function checkPartForProblems(part,index,conflictingStates){
+    
+    const lastElem = part[part.length-1];
+    const sliced = part.slice(0,part.length-1);
+
+    for(let i = 0; i<sliced.length;i++)
+    {
+        if(sliced[i].NSU === lastElem.NSU){
+            return { isWrong:true, bordersAmount: 2, index};
+        }
+    }
+
+    for(let i = 0;i<conflictingStates.length;i++)
+    {
+        if(isStateInPart(conflictingStates[i].tacts[0],part) && isStateInPart(conflictingStates[i].tacts[1],part)){
+            return { isWrong: true, bordersAmount: 2, index};
+        }
+    }
+
+    return { isWrong: false, bordersAmount: 0};
+}
+
+function sameIndexParts(parts,confArray)
+{
+    let canMerge = true;
+    for(let i = 0; i<parts.length;i++){
+        for(let j = i+1;j < parts.length;j++){
+            if(!checkParts(parts[i].part,parts[j].part,confArray)){
+                canMerge = false;
+                break;
+            }
+        }
+    }
+    if(canMerge){
+        parts.forEach(p=>p.index = parts[0].index);
+    }
+}
+
 class TableService
 {
     static calculateTacts(inArray,outArray,length)
@@ -395,7 +449,7 @@ class TableService
         let endOfCycle = false;
         let reduction = false;
         let mergeEndProcedure = false;
-        let additionalBorderProcedure = {isNeeded: false, borderAdded: false, stackIndex:0};
+        let additionalBorderProcedure = {isNeeded: false,bordersAmount: 1, borderAdded: false, stackIndex:0};
         let doubleBorderProcedure = {isNeeded:false, firstBorder: {set: false, index: -1,tact:-1}};
         let currentPart;
         let index = 0;
@@ -403,8 +457,6 @@ class TableService
         let borders = [];
         let arr = [...conflictingStates];
         let stack = [[...nsuArray]];
-        // eslint-disable-next-line no-debugger
-        debugger;
         while(!solved)
         {
             if(reduction)
@@ -452,6 +504,19 @@ class TableService
                             reduction = false;
                             stack.sort((a,b)=>a[a.length-1].tact-b[b.length-1].tact);
                         }
+                        else{
+                            for(let i = 0; i < stack.length;i++)
+                            {
+                                const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates);
+                                if(isWrong){
+                                    additionalBorderProcedure.stackIndex = index;
+                                    additionalBorderProcedure.bordersAmount = bordersAmount;
+                                    reduction = false;
+                                    additionalBorderProcedure.isNeeded = true;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
                 else{
@@ -468,23 +533,30 @@ class TableService
                 let nextPartEnd = currentPart[currentPart.length-1].tact;
                 for(let i = currentPart.length-2;i>=0;i--)
                 {
-                    if(currentPart[i].tact !== nsuArray[nsuArray.length-1].tact && !borders.includes(currentPart[i].tact))
+                    if(!borders.includes(currentPart[i].tact))
                     {
                         if(!isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates) &&
                             !isAnotherConflict(currentPart[i],nextPartEnd,currentPart,conflictingStates,false))
                             {
                                 borders.push(currentPart[i].tact);
                                 additionalBorderProcedure.borderAdded = true;
+                                additionalBorderProcedure.bordersAmount--;
                                 const firstPart = currentPart.slice(0, i+1)
                                 const secondPart = currentPart.slice(i+1);
                                 stack.splice(stack.indexOf(currentPart),1,firstPart,secondPart);
+                                if(additionalBorderProcedure.bordersAmount > 0){
+                                    additionalBorderProcedure.stackIndex = stack.indexOf(firstPart);
+                                }
                                 break;
                             }
                     }
                 }
                 if(additionalBorderProcedure.borderAdded)
                 {
-                    solved = true;
+                    if(additionalBorderProcedure.bordersAmount === 0)
+                    {
+                        solved = true;
+                    }
                 }
                 else
                 {
@@ -529,7 +601,7 @@ class TableService
                 {
                     let {first,second} = whichStateComesFirst(state.tacts,currentPart);
                     let tact = (mergeEndProcedure || second-offset < 0) ? 
-                        nsuArray[nsuArray.length-offset-(doubleBorderProcedure.isNeeded ? 0 : 1)].tact : second - offset;
+                        nsuArray[nsuArray.length-offset].tact : second - offset;
                     let nextPartEnd = doubleBorderProcedure.firstBorder.set ? 
                         doubleBorderProcedure.firstBorder.tact : 
                             currentPart[currentPart.length-1].tact;
@@ -545,9 +617,13 @@ class TableService
                                     doubleBorderProcedure.firstBorder.set = true;
                                     doubleBorderProcedure.firstBorder.index = currentPart.indexOf(nsuVal)+1;
                                     doubleBorderProcedure.firstBorder.tact = tact;
-                                    if(second-offset >= 0)
+                                    if(second-offset > 0)
                                     {
                                         offset++;
+                                    }
+                                    else{
+                                        mergeEndProcedure = true;
+                                        offset = 1;
                                     }
                                 }
                                 else
@@ -561,6 +637,7 @@ class TableService
                                     doubleBorderProcedure = {isNeeded: false, firstBorder: {set:false,index:-1}};
                                     if(endOfCycle)
                                     {
+                                        mergeEndProcedure = false;
                                         reduction = true;
                                         endOfCycle = false;
                                     }
@@ -638,36 +715,26 @@ class TableService
        else{
             const indexedParts = parts.map((p,i)=> ({index:i+1,part: p}));
 
+            // eslint-disable-next-line no-debugger
+            debugger;
             for(let i = 0; i < indexedParts.length; i++)
             {
-                if(i+2 < indexedParts.length)
-                {
-                    if(checkParts(indexedParts[i].part,indexedParts[i+2].part,conflictingStates))
-                    {
-                        indexedParts[i+2].index = indexedParts[i].index;
-                    }
-                }
+                const filtered = indexedParts.filter((_,j)=> j % 2 === i % 2);
+                sameIndexParts(filtered,conflictingStates)
             }
 
             const {indices,repeats} = partCount(indexedParts);
 
-            // eslint-disable-next-line no-debugger
-            debugger;
-            let signalAmount = indices.length > 2 ? Math.ceil(Math.sqrt(indices.length)) : 1;
+            let signalAmount = indices.length > 2 ? Math.ceil(indices.length/2) : 1;
             useOneSignal = signalAmount === 1;
             let count = 0;
             let signals = [];
-            signalLabels('additional',signalAmount).forEach((s,i)=>{
-                if(i === 0 && borders[0] === 0){
-                    signals.push({label:s,working:true,signalChanges:['+']});
-                    newDependencies.push({tact:0,label:s,type:'rising'});
-                }
-                else{
+            signalLabels('additional',signalAmount).forEach((s)=>{
                     signals.push({label:s,working:false,signalChanges:['-']});
-                } 
             });
             let signalFlag = false;
-            indexedParts.forEach(i=>
+            let states = [];
+            indexedParts.forEach((i,j)=>
                 {
                     let allSignalsOn = signals.every(s=>s.working === true);
                     if(allSignalsOn)
@@ -679,25 +746,42 @@ class TableService
                             signalFlag = false;
                         }
                     }
-                    let signal = signalFlag ? signals.find(s=>s.working) : signals.find(s=>!s.working);
-                    newDependencies.push({tact: i.part[i.part.length-1].tact+0.5,label: signal.label,
-                        type: signal.working ? 'falling' : 'rising'});
-                    
-                    signal.working ? signal.signalChanges.push('-') : signal.signalChanges.push('+');
-                    updateCodedSignals(signal,signals);
-                    signal.working = !signal.working;
-                    if(useOneSignal)
+                    const state = states.find(s=>s.index === i.index);
+                    if(typeof state === 'undefined')
                     {
-                        count++;
-                        if(count >= 2)
+                        let nextState = j===indexedParts.length-1 ? states.find(s=>s.index === indexedParts[0].index):states.find(s=>s.index === indexedParts[j+1].index);
+                        let signal;
+                        states.push({index: i.index,states:createState(signals),})
+                        if(typeof nextState === 'undefined')
                         {
-                            count = 0;
-                            signalFlag = false;
+                            signal = signalFlag ? signals.find(s=>s.working) : signals.find(s=>!s.working);
                         }
+                        else{
+                            let label = whichSignalIsDifferent(states[states.length-1],nextState);
+                            signal = signals.find(s=>s.label === label);
+                        }
+                        newDependencies.push({tact: i.part[i.part.length-1].tact+0.5,label: signal.label,
+                            type: signal.working ? 'falling' : 'rising'});
+                    
+                        signal.working ? signal.signalChanges.push('-') : signal.signalChanges.push('+');
+                        updateCodedSignals(signal,signals);
+                        signal.working = !signal.working;
                     }
+                    else{
+                        let prevState = j === indexedParts.length-1 ? states[0] : states[states.length-1];
+                        let label = whichSignalIsDifferent(prevState,state);
+                        let signal = signals.find(s=>s.label === label);
+                        newDependencies.push({tact: i.part[i.part.length-1].tact+0.5,label : signal.label,
+                            type: signal.working ? 'falling' : 'rising'});
+                            signal.working ? signal.signalChanges.push('-') : signal.signalChanges.push('+');
+                        states.push({index: i.index,states:createState(signals),})
+                        updateCodedSignals(signal,signals);
+                        signal.working = !signal.working;
+                    }
+
                 });
             newDependencies.sort((a,b)=> a.tact - b.tact);
-            return {dependencies: newDependencies,tacts: newDependencies.length,labels:signals,indices}
+            return {dependencies: newDependencies,tacts: newDependencies.length,labels:signals,indices:indexedParts}
        }
    }
 

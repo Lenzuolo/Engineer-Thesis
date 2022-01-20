@@ -39,13 +39,13 @@ const ConnectionOrderTable = ({initial,showBorders,signalsIn,signalsOut}) =>
                     index = 0;
                 }
                 count = 0;
-                return <td key={i} className='bordered' colSpan={span+1}><b>{indices[ind]}</b></td>
+                return <td key={i} className='bordered' colSpan={span+1}><b>{indices[ind].index}</b></td>
             }
             else
             {
                 if(i === nsu.length-1)
                 {
-                    return <td key={i} className='notBordered' colSpan={count+1}><b>{indices[index]}</b></td>
+                    return <td key={i} className='notBordered' colSpan={count+1}><b>{indices[index].index}</b></td>
                 }
                 count++;
             }

@@ -27,9 +27,10 @@ const Statistics = ({initial}) =>{
         inArrays.forEach(i => signals.push(i.label));
         outArrays.forEach(o => signals.push(o.label));
 
-        if(additionalSignals > 0)
+
+        if(additionalSignals.length > 0)
         {
-            signalLabels('addition',additionalSignals).forEach(a => signals.push(a));
+            signalLabels('addition',additionalSignals.length).forEach(a => signals.push(a));
         }
 
         signals.reverse();

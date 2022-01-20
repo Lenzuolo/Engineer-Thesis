@@ -202,8 +202,7 @@ class SignalService
 
             states.push({state:i,in:inState.join(''),out:outState.join('')});
         }
-        // eslint-disable-next-line no-debugger
-        debugger;
+
         states.forEach(s=>{
             const filtered = states.filter(f=>f.in === s.in);
             if(filtered.some(f=> f.out !== s.out))
