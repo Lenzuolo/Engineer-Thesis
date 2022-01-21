@@ -209,8 +209,10 @@ const TimeChart = ({label,sigType}) =>
                 newData.pop();
             else
             {
-                setXVal(xVal-1);
-                //displayNotification('error','Błąd','Cofanie z punktu wcześniejszego niż ostatni nie jest dozwolone');
+                if(xVal > 0)
+                {
+                    setXVal(xVal-1);
+                }
                 return;
             }
             updateArray({data: newData,label,sigType},true);
