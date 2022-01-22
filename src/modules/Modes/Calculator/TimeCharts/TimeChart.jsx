@@ -89,6 +89,10 @@ const TimeChart = ({label,sigType}) =>
                             setData(dataArr);
                             setSeries([{data: dataArr}]);
                             setXVal(dataArr[dataArr.length-1].x + 1);
+                            if(clicked)
+                            {
+                                setClicked(false);
+                            }
                         }
                     }
                 }
@@ -116,6 +120,10 @@ const TimeChart = ({label,sigType}) =>
                             setData(dataArr);
                             setSeries([{data: dataArr}]);
                             setXVal(dataArr[dataArr.length-1].x + 1);
+                            if(clicked)
+                            {
+                                setClicked(false);
+                            }
                         }
                     }
                 }

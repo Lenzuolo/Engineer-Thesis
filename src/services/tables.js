@@ -12,7 +12,6 @@ function edgeDetector(arg1,arg2)
     }
     else return {detected: false, type: ''};
 }
-
 function isNotConflictingState(part,nextPartEnd,state,notConfArray,prevPartEnd){
 
     const existingState = notConfArray.find(s => s.value === state.NSU);
@@ -35,7 +34,6 @@ function isNotConflictingState(part,nextPartEnd,state,notConfArray,prevPartEnd){
     }
     return false;
 }
-
 function equalsStartState(dependencyArray,state)
 {
     const arr = dependencyArray.filter(da => da.tact === 0);
@@ -54,13 +52,18 @@ function equalsStartState(dependencyArray,state)
     }
     return false;
 }
-
 function isAnotherConflict(state,nextPartEnd,currentPart,confArray,firstBorder){
     let existingStates = [];
     confArray.forEach(c =>{
         if(c.value === state.NSU){
             if(c.tacts.some(t=> t === state.tact)){
-                if(c.tacts.some(t=>t > state.tact && t <= nextPartEnd)){
+                if(c.tacts.some(t=>{
+                    let indexOfTact = currentPart.findIndex(s=>s.tact === t);
+                    let indexOfStart = currentPart.findIndex(s=>s.tact === state.tact);
+                    let indexOfEnd = currentPart.findIndex(s=>s.tact === nextPartEnd);
+                    return indexOfTact > indexOfStart && indexOfTact <= indexOfEnd
+                }))
+                {
                     existingStates.push(c);
                 }
                 else
@@ -82,7 +85,6 @@ function isAnotherConflict(state,nextPartEnd,currentPart,confArray,firstBorder){
     return existingStates.length > 0;
     
 }
-
 function isStateInPart(tact,part)
 {
     for(let i = 0; i<part.length;i++)
@@ -93,7 +95,6 @@ function isStateInPart(tact,part)
         }
     }
 }
-
 function whichStateComesFirst(tacts,part)
 {
     for(let i = 0; i < part.length; i++)
@@ -108,7 +109,6 @@ function whichStateComesFirst(tacts,part)
         }
     }
 }
-
 function findNsuIndex(tact,nsuArray)
 {
     for(let i = 0; i < nsuArray.length; i++)
@@ -119,7 +119,6 @@ function findNsuIndex(tact,nsuArray)
         }
     }
 }
-
 function isConflictingPair(state1,state2,confArray)
 {
     for(let i = 0; i < confArray.length; i++)
@@ -135,7 +134,6 @@ function isConflictingPair(state1,state2,confArray)
     }
     return false;
 }
-
 function checkParts(part1,part2,confArray)
 {
     if(part1.length === 1 
@@ -192,7 +190,6 @@ function checkParts(part1,part2,confArray)
     }
     return true;
 }
-
 function partCount(indexedParts)
 {
     let indices = [];
@@ -213,7 +210,6 @@ function partCount(indexedParts)
 
     return {indices:indices,repeats};
 }
-
 function updateCodedSignals(signal,signals)
 {
     const filtered = signals.filter(s=>s.label !== signal.label);
@@ -224,13 +220,11 @@ function updateCodedSignals(signal,signals)
 
     return;
 }
-
 function createState(signals){
     let state = [];
     signals.forEach(s=>state.push({label:s.label,working:s.working}));
     return state;
 }
-
 function whichSignalIsDifferent(prevState,state)
 {
     for(let i = 0; i < state.states.length;i++)
@@ -240,7 +234,6 @@ function whichSignalIsDifferent(prevState,state)
         }
     }
 }
-
 function checkPartForProblems(part,index,conflictingStates){
     
     const lastElem = part[part.length-1];
@@ -262,7 +255,6 @@ function checkPartForProblems(part,index,conflictingStates){
 
     return { isWrong: false, bordersAmount: 0};
 }
-
 function sameIndexParts(parts,confArray)
 {
     let canMerge = true;
@@ -278,6 +270,245 @@ function sameIndexParts(parts,confArray)
         parts.forEach(p=>p.index = parts[0].index);
     }
 }
+function reductionStage(additionalBorderProcedure,borders,stack,conflictingStates)
+{
+    let toReduce = [];
+    let mergeIndices = [];
+    let reducable = true;
+
+    stack.sort((a,b)=>a[a.length-1].tact-b[b.length-1].tact);
+    stack.forEach((p,i)=>{
+        if(p.some(s=>s.tact === borders[0] || s.tact === borders[0]+1))
+        {
+            if(p.length !== 1)
+            {
+                mergeIndices.push(i);
+                toReduce = toReduce.concat(p);
+            }
+            else
+            {
+                reducable = false;
+            }
+        }
+    });
+
+    let problems = mergeIndices.length <= 1 ? { isWrong:true } :
+        checkPartForProblems(toReduce,mergeIndices[0],conflictingStates);
+
+    reducable = problems.isWrong ? false : true;
+
+    if(reducable)
+    {
+        borders.shift();
+        stack.splice(mergeIndices[0],mergeIndices.length,toReduce);
+    }
+    else
+    {
+        if(borders.length % 2 !== 0)
+        {
+            additionalBorderProcedure.isNeeded = true;
+        }
+        else{
+            for(let i = 0; i < stack.length;i++)
+            {
+                const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates);
+                if(isWrong){
+                    additionalBorderProcedure.stackIndex = index;
+                    additionalBorderProcedure.bordersAmount = bordersAmount;
+                    additionalBorderProcedure.isNeeded = true;
+                    break;
+                }
+            }
+        }
+    }
+}
+function additionalBorderStage(additionalBorderProcedure,stack,currentPart,borders,notConflictingStates,conflictingStates)
+{
+    let prevPartEnd;
+    if(additionalBorderProcedure.stackIndex === 0)
+    {
+        const prevPart = stack[stack.length-1];
+        if(additionalBorderProcedure.bordersAmount !== 2)
+            prevPartEnd = prevPart[prevPart.length-1].tact;
+    }
+    else
+    {
+        const prevPart = stack[additionalBorderProcedure.stackIndex-1];
+        if(additionalBorderProcedure.bordersAmount !== 2)
+            prevPartEnd = prevPart[prevPart.length-1].tact;
+    }
+    let nextPartEnd = currentPart[currentPart.length-1].tact;
+    for(let i = currentPart.length-2;i>=0;i--)
+    {
+        if(!borders.includes(currentPart[i].tact))
+        {
+            if((!isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates,prevPartEnd) &&
+                !isAnotherConflict(currentPart[i],nextPartEnd,currentPart,conflictingStates,false)) || additionalBorderProcedure.doubleBorder)
+                {
+                    borders.push(currentPart[i].tact);
+                    additionalBorderProcedure.borderAdded = true;
+                    additionalBorderProcedure.bordersAmount--;
+                    const firstPart = currentPart.slice(0, i+1)
+                    const secondPart = currentPart.slice(i+1);
+                    stack.splice(stack.indexOf(currentPart),1,firstPart,secondPart);
+                    if(additionalBorderProcedure.bordersAmount > 0){
+                        additionalBorderProcedure.stackIndex = stack.indexOf(firstPart);
+                    }
+                    break;
+                }
+        }
+    }
+    if(additionalBorderProcedure.borderAdded)
+    {
+        additionalBorderProcedure.borderAdded = false;
+        if(additionalBorderProcedure.bordersAmount === 0)
+        {
+            additionalBorderProcedure.isNeeded = false;
+            for(let i = 0; i < stack.length;i++)
+            {
+                const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates);
+                if(isWrong){
+                    additionalBorderProcedure.stackIndex = index;
+                    additionalBorderProcedure.bordersAmount = bordersAmount;
+                    additionalBorderProcedure.isNeeded = true;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        const {isWrong} = checkPartForProblems(currentPart,additionalBorderProcedure.stackIndex,conflictingStates);
+        isWrong ? additionalBorderProcedure.doubleBorder = true : additionalBorderProcedure.stackIndex++;
+    }
+}
+function doubleBorderStage(doubleBorderProcedure,currentPart,stack,stateProps,indices,stateLists,borders,flags)
+{
+    if(isNotConflictingState(currentPart,stateProps.nextPartEnd,
+        stateProps.nsuVal,stateLists.notConflictingStates,stateProps.prevPartEnd) || 
+            isAnotherConflict(stateProps.nsuVal,stateProps.nextPartEnd,currentPart,stateLists.conflictingStates,true))
+        {
+            borders.push(stateProps.nsuVal.tact);
+            if(!doubleBorderProcedure.firstBorder.set)
+            {
+                doubleBorderProcedure.firstBorder.set = true;
+                doubleBorderProcedure.firstBorder.index = currentPart.indexOf(stateProps.nsuVal)+1;
+                doubleBorderProcedure.firstBorder.tact = stateProps.nsuVal.tact;
+                if(stateProps.second-indices.offset > 0)
+                {
+                    indices.offset++;
+                }
+                else{
+                    flags.mergeEndProcedure = true;
+                    indices.offset = 1;
+                }
+            }
+            else
+            {
+                const partIndex = stack.indexOf(currentPart);
+                const firstPart = currentPart.slice(0,currentPart.indexOf(stateProps.nsuVal)+1);
+                const secondPart = currentPart.slice(currentPart.indexOf(stateProps.nsuVal)+1,
+                    doubleBorderProcedure.firstBorder.index);
+                const thirdPart = currentPart.slice(doubleBorderProcedure.firstBorder.index);
+                stack.splice(partIndex,1,firstPart,secondPart,thirdPart);
+                doubleBorderProcedure.isNeeded = false; 
+                doubleBorderProcedure.firstBorder = {set:false,index:-1,tact:-1};
+                if(flags.endOfCycle)
+                {
+                    flags.mergeEndProcedure = false;
+                    flags.reduction = true;
+                    flags.endOfCycle = false;
+                }
+                indices.offset = 1;
+            }
+        }
+}
+function borderControl(doubleBorderProcedure,currentPart,stack,nsuArray,stateProps,indices,stateLists,borders,flags){
+    if(!isNotConflictingState(currentPart,stateProps.nextPartEnd,
+        stateProps.nsuVal,stateLists.notConflictingStates,stateProps.prevPartEnd) && 
+            !isAnotherConflict(stateProps.nsuVal,stateProps.nextPartEnd,currentPart,stateLists.conflictingStates,borders.length===0))
+        {
+            borders.push(stateProps.nsuVal.tact);
+            indices.offset = 1;
+            const firstPart = currentPart.slice(0, currentPart.indexOf(stateProps.nsuVal)+1)
+            const secondPart = currentPart.slice(currentPart.indexOf(stateProps.nsuVal)+1);
+            stack.splice(stack.indexOf(currentPart),1,firstPart,secondPart);
+            if(flags.endOfCycle){
+                flags.mergeEndProcedure = false;
+                flags.reduction = true;
+                flags.endOfCycle = false;
+            }
+        }
+        else
+        {
+            indices.offset++;
+            if(stateProps.second-indices.offset >= 0)
+            {
+                if(currentPart.findIndex(a=>a.tact === stateProps.second-indices.offset) 
+                    <= currentPart.findIndex(a=>a.tact === stateProps.first))
+                {
+                    doubleBorderProcedure.isNeeded = true;
+                    indices.offset = 1;
+                }
+            }
+            else
+            {
+                if(flags.endOfCycle)
+                {
+                    indices.offset--;
+                    if(currentPart.findIndex(a=>a.tact === nsuArray[nsuArray.length-1].tact-indices.offset) 
+                        <= currentPart.findIndex(a=>a.tact === stateProps.first))
+                    {
+                        indices.offset = 1;
+                        doubleBorderProcedure.isNeeded = true;
+                        flags.mergeEndProcedure = false;
+                        return;
+                    }
+                    else
+                    {
+                        if(!flags.mergeEndProcedure)
+                        {
+                            flags.mergeEndProcedure = true;
+                            indices.offset = 1;
+                            return;
+                        }
+                    }
+                    indices.offset++;
+                }
+            }
+        }
+}
+function findNearestState(conflictingStates,currentPart)
+{
+    let allStatesInPart = [];
+
+    conflictingStates.forEach(c=>{
+        if(isStateInPart(c.tacts[0],currentPart) && isStateInPart(c.tacts[1],currentPart))
+        {
+            allStatesInPart.push(c);
+        }
+    });
+
+    let difference = currentPart.length;
+    let state;
+
+    allStatesInPart.forEach(s=>
+        {
+            let diff = Math.abs(currentPart.findIndex(c=>c.tact === s.tacts[0])-currentPart.findIndex(c=>c.tact === s.tacts[1]));
+            if(diff < difference )
+            {
+                if(state)
+                {
+                    if(state.tacts[1] < s.tacts[1]) return;
+                }
+                state = s;
+                difference = diff;
+            }
+        });
+
+    return state;
+}
+
 
 class TableService
 {
@@ -387,7 +618,6 @@ class TableService
 
         return nsuArray;
     }
-
     static calculateConditions(label,dependencyArray,nsuArray){
  
         let workingConditions = [];
@@ -446,184 +676,74 @@ class TableService
 
         return { workingConditions: workingConditions, notWorkingConditions: notWorkingConditions, label: label};
     }
-
     static findBorders(nsuArray,conflictingStates,notConflictingStates){
-        
-        let solved = false;
-        let endOfCycle = false;
-        let reduction = false;
-        let mergeEndProcedure = false;
-        let additionalBorderProcedure = {isNeeded: false,bordersAmount: 1, borderAdded: false, stackIndex:0,doubleBorder:false,};
-        let doubleBorderProcedure = {isNeeded:false, firstBorder: {set: false, index: -1,tact:-1}};
+        let flags = {
+            solved:false,
+            endOfCycle:false,
+            reduction:false,
+            mergeEndProcedure: false,
+
+        };
+        let procedures = {
+            additionalBorderProcedure:{isNeeded: false,bordersAmount: 1, borderAdded: false, stackIndex:0,doubleBorder:false,},
+            doubleBorderProcedure:{isNeeded:false, firstBorder: {set: false, index: -1,tact:-1},},
+        };
         let currentPart;
-        let index = 0;
-        let offset = 1;
+        let indices = {offset:1,};
         let borders = [];
-        let arr = [...conflictingStates];
         let stack = [[...nsuArray]];
         // eslint-disable-next-line no-debugger
         debugger
-        while(!solved)
+        while(!flags.solved)
         {
-            if(reduction)
+            if(flags.reduction)
             {
                 if(borders.length > 2)
                 {
-                    let toReduce = [];
-                    let mergeIndices = [];
-                    let reducable = true;
-                    stack.sort((a,b)=>a[a.length-1].tact-b[b.length-1].tact);
-                    stack.forEach((p,i)=>{
-                        if(p.some(s=>s.tact === borders[0] || s.tact === borders[0]+1))
-                        {
-                            if(p.length !== 1)
-                            {
-                                mergeIndices.push(i);
-                                toReduce = toReduce.concat(p);
-                            }
-                            else
-                            {
-                                reducable = false;
-                            }
-                        }
-                    });
-
-                    
-                    let problems = mergeIndices.length <= 1 ? { isWrong:true } :
-                        checkPartForProblems(toReduce,mergeIndices[0],conflictingStates);
-
-                    reducable = problems.isWrong ? false : true;
-
-                    if(reducable)
-                    {
-                        borders.shift();
-                        stack.splice(mergeIndices[0],mergeIndices.length,toReduce);
-                    }
-                    else
-                    {
-                        if(borders.length % 2 !== 0)
-                        {
-                            additionalBorderProcedure.isNeeded = true;
-                            reduction = false;
-                        }
-                        else{
-                            for(let i = 0; i < stack.length;i++)
-                            {
-                                const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates);
-                                if(isWrong){
-                                    additionalBorderProcedure.stackIndex = index;
-                                    additionalBorderProcedure.bordersAmount = bordersAmount;
-                                    reduction = false;
-                                    additionalBorderProcedure.isNeeded = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    reductionStage(procedures.additionalBorderProcedure,borders,stack,conflictingStates);
                 }
                 else{
                     if(stack.length>2){
                         stack.shift();
                     }
                 }
-                if(additionalBorderProcedure.isNeeded === false)
-                    solved = true;
+                flags.reduction = false;
+                if(procedures.additionalBorderProcedure.isNeeded === false)
+                    flags.solved = true;
             }
-            else if(additionalBorderProcedure.isNeeded)
+            else if(procedures.additionalBorderProcedure.isNeeded)
             {
-                currentPart = stack[additionalBorderProcedure.stackIndex];
-                let prevPartEnd;
-                if(additionalBorderProcedure.stackIndex === 0)
-                {
-                    const prevPart = stack[stack.length-1];
-                    prevPartEnd = prevPart[prevPart.length-1].tact;
-                }
-                else
-                {
-                    const prevPart = stack[additionalBorderProcedure.stackIndex-1];
-                    prevPartEnd = prevPart[prevPart.length-1].tact;
-                }
-                let nextPartEnd = currentPart[currentPart.length-1].tact;
-                for(let i = currentPart.length-2;i>=0;i--)
-                {
-                    if(!borders.includes(currentPart[i].tact))
-                    {
-                        if((!isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates,prevPartEnd) &&
-                            !isAnotherConflict(currentPart[i],nextPartEnd,currentPart,conflictingStates,false)) || additionalBorderProcedure.doubleBorder)
-                            {
-                                borders.push(currentPart[i].tact);
-                                additionalBorderProcedure.borderAdded = true;
-                                additionalBorderProcedure.bordersAmount--;
-                                const firstPart = currentPart.slice(0, i+1)
-                                const secondPart = currentPart.slice(i+1);
-                                stack.splice(stack.indexOf(currentPart),1,firstPart,secondPart);
-                                if(additionalBorderProcedure.bordersAmount > 0){
-                                    additionalBorderProcedure.stackIndex = stack.indexOf(firstPart);
-                                }
-                                break;
-                            }
-                    }
-                }
-                if(additionalBorderProcedure.borderAdded)
-                {
-                    additionalBorderProcedure.borderAdded = false;
-                    if(additionalBorderProcedure.bordersAmount === 0)
-                    {
-                        additionalBorderProcedure.isNeeded = false;
-                        for(let i = 0; i < stack.length;i++)
-                        {
-                            const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates);
-                            if(isWrong){
-                                additionalBorderProcedure.stackIndex = index;
-                                additionalBorderProcedure.bordersAmount = bordersAmount;
-                                reduction = false;
-                                additionalBorderProcedure.isNeeded = true;
-                                break;
-                            }
-                        }
-                        if(!additionalBorderProcedure.isNeeded)
-                            solved = true;
-                    }
-                }
-                else
-                {
-                    const {isWrong} = checkPartForProblems(currentPart,additionalBorderProcedure.stackIndex,conflictingStates);
-                    isWrong ? additionalBorderProcedure.doubleBorder = true : additionalBorderProcedure.stackIndex++;
-                }
+                currentPart = stack[procedures.additionalBorderProcedure.stackIndex];
+                additionalBorderStage(procedures.additionalBorderProcedure,stack,currentPart,borders,notConflictingStates,conflictingStates);
+                if(!procedures.additionalBorderProcedure.isNeeded)
+                flags.solved = true;
             }
             else
             {
-                let state = arr[index];
-                if(!doubleBorderProcedure.isNeeded)
+                if(!procedures.doubleBorderProcedure.isNeeded)
                 {
                     currentPart = stack[stack.length-1];
-                }
-                if(!isStateInPart(state.tacts[0],currentPart) ||
-                    !isStateInPart(state.tacts[1],currentPart))
+                } 
+                let state = findNearestState(conflictingStates,currentPart);
+                if(typeof state === 'undefined')
                 {
-                    index++;
-                        if(index >= conflictingStates.length)
-                        { 
-                            if(currentPart[currentPart.length-1].tact === nsuArray[nsuArray.length-1].tact)
-                            {
-                                if(!endOfCycle)
-                                {
-                                    endOfCycle = true;
-                                    const merged = currentPart.concat([...stack[0]]);
-                                    stack.shift();
-                                    stack.splice(stack.length-1,1,merged);
-                                    index = 0;
-                                }
-                            }
-                            else
-                            {
-                                if(endOfCycle)
-                                {
-                                    reduction = true;
-                                }
-                                index = 0;
-                            }
+                    if(currentPart[currentPart.length-1].tact === nsuArray[nsuArray.length-1].tact)
+                    {
+                        if(!flags.endOfCycle)
+                        {
+                            flags.endOfCycle = true;
+                            const merged = currentPart.concat([...stack[0]]);
+                            stack.shift();
+                            stack.splice(stack.length-1,1,merged);
                         }
+                    }
+                    else
+                    {
+                        if(flags.endOfCycle)
+                        {
+                            flags.reduction = true;
+                        }
+                    }
                 }
                 else
                 {
@@ -636,100 +756,32 @@ class TableService
                     }
                     else
                     {
-                        prevPartEnd = nsuArray[0].tact;
+                        currentPart[0] === nsuArray[0] ? prevPartEnd=nsuArray[0].tact : prevPartEnd=currentPart[currentPart.length-1].tact;
                     }
-                    let tact = (mergeEndProcedure || second-offset < 0) ? 
-                        nsuArray[nsuArray.length-offset].tact : second - offset;
-                    let nextPartEnd = doubleBorderProcedure.firstBorder.set ? 
-                        doubleBorderProcedure.firstBorder.tact : 
+                    let tact = (flags.mergeEndProcedure || second-indices.offset < 0) ? 
+                        nsuArray[nsuArray.length-indices.offset].tact : second - indices.offset;
+                    let nextPartEnd = procedures.doubleBorderProcedure.firstBorder.set ? 
+                        procedures.doubleBorderProcedure.firstBorder.tact : 
                             currentPart[currentPart.length-1].tact;
                     let nsuVal = currentPart.find(n=>n.tact === tact);
-                    if(doubleBorderProcedure.isNeeded)
+
+                    let stateProps = {
+                        first,
+                        second,
+                        prevPartEnd,
+                        nextPartEnd,
+                        nsuVal,
+                    }
+
+                    if(procedures.doubleBorderProcedure.isNeeded)
                     {
-                        if(isNotConflictingState(currentPart,nextPartEnd,
-                            nsuVal,notConflictingStates,prevPartEnd) || isAnotherConflict(nsuVal,nextPartEnd,currentPart,conflictingStates,true))
-                            {
-                                borders.push(tact);
-                                if(!doubleBorderProcedure.firstBorder.set)
-                                {
-                                    doubleBorderProcedure.firstBorder.set = true;
-                                    doubleBorderProcedure.firstBorder.index = currentPart.indexOf(nsuVal)+1;
-                                    doubleBorderProcedure.firstBorder.tact = tact;
-                                    if(second-offset > 0)
-                                    {
-                                        offset++;
-                                    }
-                                    else{
-                                        mergeEndProcedure = true;
-                                        offset = 1;
-                                    }
-                                }
-                                else
-                                {
-                                    const partIndex = stack.indexOf(currentPart);
-                                    const firstPart = currentPart.slice(0,currentPart.indexOf(nsuVal)+1);
-                                    const secondPart = currentPart.slice(currentPart.indexOf(nsuVal)+1,
-                                        doubleBorderProcedure.firstBorder.index);
-                                    const thirdPart = currentPart.slice(doubleBorderProcedure.firstBorder.index);
-                                    stack.splice(partIndex,1,firstPart,secondPart,thirdPart);
-                                    doubleBorderProcedure = {isNeeded: false, firstBorder: {set:false,index:-1}};
-                                    if(endOfCycle)
-                                    {
-                                        mergeEndProcedure = false;
-                                        reduction = true;
-                                        endOfCycle = false;
-                                    }
-                                    offset = 1;
-                                    index = 0;
-                                }
-                            }
+                        doubleBorderStage(procedures.doubleBorderProcedure,currentPart,stack,
+                            stateProps,indices,{conflictingStates,notConflictingStates},borders,flags);
                     }
                     else
                     {
-                        if(!isNotConflictingState(currentPart,nextPartEnd,
-                            nsuVal,notConflictingStates,prevPartEnd) && !isAnotherConflict(nsuVal,nextPartEnd,currentPart,conflictingStates,borders.length===0)){
-                            borders.push(tact);
-                            offset = 1;
-                            const firstPart = currentPart.slice(0, currentPart.indexOf(nsuVal)+1)
-                            const secondPart = currentPart.slice(currentPart.indexOf(nsuVal)+1);
-                            stack.splice(stack.indexOf(currentPart),1,firstPart,secondPart);
-                            if(endOfCycle){
-                                mergeEndProcedure = false;
-                                reduction = true;
-                                endOfCycle = false;
-                            }
-                            index = 0;
-                        }
-                        else{
-                            offset++;
-                            if(second-offset >= 0)
-                            {
-                                if(currentPart.findIndex(a=>a.tact === second-offset) <= currentPart.findIndex(a=>a.tact === first))
-                                {
-                                    doubleBorderProcedure.isNeeded = true;
-                                    offset = 1;
-                                }
-                            }
-                            else
-                            {
-                                if(endOfCycle)
-                                {
-                                    if(currentPart.findIndex(a=>a.tact === nsuArray[nsuArray.length-1].tact-offset) <= currentPart.findIndex(a=>a.tact === first))
-                                    {
-                                        offset = 1;
-                                        doubleBorderProcedure.isNeeded = true;
-                                    }
-                                    else
-                                    {
-                                        if(!mergeEndProcedure)
-                                        {
-                                            mergeEndProcedure = true;
-                                            offset = 1;
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        borderControl(procedures.doubleBorderProcedure,currentPart,stack,nsuArray,
+                            stateProps,indices,{conflictingStates,notConflictingStates},borders,flags);
                     }
                 }
             }
@@ -742,8 +794,7 @@ class TableService
 
         return {borders,stack};
     }
-
-   static codeSignals(borders,parts,dependencies,{conflictingStates})
+    static codeSignals(borders,parts,dependencies,{conflictingStates})
    {
        let newDependencies = [...dependencies];
        let useOneSignal = borders.length === 2;
@@ -825,7 +876,7 @@ class TableService
             newDependencies.sort((a,b)=> a.tact - b.tact);
             return {dependencies: newDependencies,tacts: newDependencies.length,labels:signals,indices:indexedParts}
        }
-   }
+    }
 
 }
 
