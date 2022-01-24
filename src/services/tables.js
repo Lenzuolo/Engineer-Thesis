@@ -499,7 +499,9 @@ function findNearestState(conflictingStates,currentPart)
             {
                 if(state)
                 {
-                    if(state.tacts[1] < s.tacts[1]) return;
+                    const currStateOrder = whichStateComesFirst(state.tacts,currentPart);
+                    const thisStateOrder = whichStateComesFirst(s.tacts,currentPart);
+                    if(currentPart.findIndex(c=>c.tact === currStateOrder.second) <= currentPart.findIndex(c=>c.tact === thisStateOrder.second)) return;
                 }
                 state = s;
                 difference = diff;
@@ -706,6 +708,16 @@ class TableService
                     if(stack.length>2){
                         stack.shift();
                     }
+                    for(let i = 0; i < stack.length;i++)
+                    {
+                        const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates);
+                        if(isWrong){
+                            procedures.additionalBorderProcedure.stackIndex = index;
+                            procedures.additionalBorderProcedure.bordersAmount = bordersAmount;
+                            procedures.additionalBorderProcedure.isNeeded = true;
+                            break;
+                        }
+                    }
                 }
                 flags.reduction = false;
                 if(procedures.additionalBorderProcedure.isNeeded === false)
@@ -819,8 +831,6 @@ class TableService
             const {indices,repeats} = partCount(indexedParts);
 
             let signalAmount = indices.length > 2 ? Math.ceil(indices.length/2) : 1;
-            useOneSignal = signalAmount === 1;
-            let count = 0;
             let signals = [];
             signalLabels('additional',signalAmount).forEach((s)=>{
                     signals.push({label:s,working:false,signalChanges:['-']});
@@ -861,9 +871,11 @@ class TableService
                         signal.working = !signal.working;
                     }
                     else{
+                        let label;
                         let prevState = j === indexedParts.length-1 ? states[0] : states[states.length-1];
-                        let label = whichSignalIsDifferent(prevState,state);
-                        let signal = signals.find(s=>s.label === label);
+                        let nextState = j === indexedParts.length-1 ? states.find(s=>s.index === indexedParts[0].index):states.find(s=>s.index === indexedParts[j+1].index);
+                        label = whichSignalIsDifferent(prevState,state);
+                        let signal = prevState.index === nextState?.index ? signals.find(s=>s.label === label) : signals.find(s=>s.label !== label);
                         newDependencies.push({tact: i.part[i.part.length-1].tact+0.5,label : signal.label,
                             type: signal.working ? 'falling' : 'rising'});
                             signal.working ? signal.signalChanges.push('-') : signal.signalChanges.push('+');
