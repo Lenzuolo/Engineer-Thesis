@@ -54,13 +54,13 @@ const Calculator = () =>
 
         setMappedLabelsIn(labelsIn.map(li=>
             {
-                addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:li,sigType:'in'});
+                addArray({label:li,sigType:'in'});
                 return <TimeChart  key={li} label={li} sigType='in'/>
         }));
 
         setMappedLabelsOut(labelsOut.map(lo=>
             {
-                addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:lo,sigType:'out'});
+                addArray({label:lo,sigType:'out'});
                 return <TimeChart  key={lo} label={lo} sigType='out'/>
             }));
 
@@ -78,7 +78,7 @@ const Calculator = () =>
                 const arr = signalLabels('in',signals+1);
                 const label = arr[arr.length-1];
                 labels.push(<TimeChart key={label} label={label} sigType='in'/>);
-                addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:label,sigType:'in'});
+                addArray({label:label,sigType:'in'});
                 setMappedLabelsIn(labels); 
             }
             else if(signal === 'out')
@@ -89,7 +89,7 @@ const Calculator = () =>
                 const arr = signalLabels('out',signals+1);
                 const label = arr[arr.length-1];
                 labels.push(<TimeChart key={label} label={label} sigType='out'/>);
-                addArray({data:[/*{x:0,y:0},{x:1,y:0}*/],label:label,sigType:'out'});
+                addArray({label:label,sigType:'out'});
                 setMappedLabelsOut(labels); 
             };
         }

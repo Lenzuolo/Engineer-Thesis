@@ -53,7 +53,7 @@ export const options =
         },
         xaxis: {
             type: 'numeric',
-            tickPlacement: 'between',
+            tickPlacement: 'on',
             min:0,
             labels: {
                 show: true,

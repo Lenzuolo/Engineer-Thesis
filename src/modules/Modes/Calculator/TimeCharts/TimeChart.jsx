@@ -6,6 +6,7 @@ import {ArrowUpOutlined,ArrowDownOutlined,CloseOutlined,UndoOutlined} from '@ant
 import './TimeChart.css';
 import { displayNotification } from '../../../../components';
 import { options} from './options';
+import { MAX_DATA_POINTS, round } from '../../../../utils';
 
 
 
@@ -17,7 +18,7 @@ const TimeChart = ({label,sigType}) =>
     const [data,setData] = useState([]);
     const [xVal,setXVal] = useState(0);
     const [series,setSeries] = useState([{name:'',data: data}]);
-    const [maxTicks,setMaxTicks] = useState(10);
+    const [maxTicks,setMaxTicks] = useState(MAX_DATA_POINTS);
     const [clicked, setClicked] = useState(false);
     const [lastPoint,setLastPoint] = useState(false)
 
@@ -34,9 +35,8 @@ const TimeChart = ({label,sigType}) =>
         yaxis: {...options.yaxis,title:{text:label}},
             xaxis: {...options.xaxis,max:maxTicks,tickAmount:maxTicks},
                 chart:{...options.chart,events:{...options.chart.events,markerClick:handleClick}},
-                    annotations: {xaxis:[{x:(xVal === 0 || clicked || lastPoint) ? xVal : xVal-1,borderColor:'#00f'
+                    annotations: {xaxis:[{x:(xVal-1 === data[data.length-1]?.x && !lastPoint) ? xVal-1 : xVal,borderColor:'#00f',
                       }]}};
-
     useEffect(()=>updateSignals());
 
     useEffect(()=>{
@@ -48,16 +48,25 @@ const TimeChart = ({label,sigType}) =>
         updateSignals();
         if(data.length > maxTicks)
         {
-            const ratio = parseInt(Math.round(xVal/10));
-            setMaxTicks(10 * ratio + 5);
+            const ratio = round(data.length/10,1);
+            const nextMax = MAX_DATA_POINTS * ratio + 5;
+            const filledData = [...data];
+            for(let i = data.length; i<nextMax;i++)
+            {
+                filledData.push({x:i,y:0});
+            }
+            updateArray({data: filledData,label,sigType},false);
+            setData(filledData);
+            setSeries([{data: filledData}]);
+            setMaxTicks(nextMax);
         }
-        else if(data.length < 10)
+        else if(data.length <= MAX_DATA_POINTS)
         {
-            setMaxTicks(10);
+            setMaxTicks(MAX_DATA_POINTS);
         }
         else if(data.length < maxTicks - 5)
         {
-            const ratio = parseInt(Math.round((xVal-1)/10));
+            const ratio = parseInt(Math.round(data.length/10));
             setMaxTicks(10 * ratio + 5);
         }
     },[xVal,data.length,arrayChanged]);
@@ -86,9 +95,9 @@ const TimeChart = ({label,sigType}) =>
                             needUpdating = true;
                         }
                         if(dataArr.length !== 0 && needUpdating){
+                            data.length === 0 ? setXVal(0) : setXVal(dataArr[dataArr.length-1].x + 1);
                             setData(dataArr);
                             setSeries([{data: dataArr}]);
-                            setXVal(dataArr[dataArr.length-1].x + 1);
                             if(clicked)
                             {
                                 setClicked(false);
@@ -117,9 +126,9 @@ const TimeChart = ({label,sigType}) =>
                             needUpdating = true;
                         }
                         if(dataArr.length !== 0 && needUpdating){
+                            data.length === 0 ? setXVal(0) : setXVal(dataArr[dataArr.length-1].x + 1);
                             setData(dataArr);
                             setSeries([{data: dataArr}]);
-                            setXVal(dataArr[dataArr.length-1].x + 1);
                             if(clicked)
                             {
                                 setClicked(false);
@@ -132,7 +141,6 @@ const TimeChart = ({label,sigType}) =>
                 break;
         }
     }
-
 
     const onUpButtonClick = () =>
     {
@@ -201,32 +209,38 @@ const TimeChart = ({label,sigType}) =>
 
     const onClearButtonClick = () =>
     {
-        setData([]);
-        updateArray({data: [],label,sigType},false);
+        const resetData = [];
+        for(let i = 0; i < MAX_DATA_POINTS; i++)
+        {
+            resetData.push({x:i,y:0});
+        }
+        setData(resetData);
+        updateArray({data: resetData,label,sigType},false);
         setXVal(0);
-        setSeries([{data: []}]);
-        setMaxTicks(10);
+        setLastPoint(false);
+        setClicked(false);
+        setSeries([{data: resetData}]);
+        setMaxTicks(MAX_DATA_POINTS);
     }
 
     const onUndoButtonClick = () =>
     {
-        if(data.length >= 1)
+        if(data.length > MAX_DATA_POINTS)
         {
             const newData = [...data];
             if(lastPoint || data[data.length-1].x === xVal-1)
                 newData.pop();
-            else
-            {
-                if(xVal > 0)
-                {
-                    setXVal(xVal-1);
-                }
-                return;
-            }
             updateArray({data: newData,label,sigType},true);
             setXVal(xVal-1);
             setSeries([{data: newData}]);
             setData(newData);
+        }
+        else
+        {
+            if(xVal > 0)
+            {
+                setXVal(xVal-1);
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 import React, { useCallback, useState} from 'react';
-import { useEffect } from 'react/cjs/react.development';
 import { findMaxLength, SignalService } from '../services';
+import { MAX_DATA_POINTS } from '../utils';
 
 const defaultState = () =>(
 {
@@ -17,8 +17,15 @@ const SignalContextProvider = ({children}) =>
 {
     const [state,setState] = useState(defaultState());
 
-    const addArray = useCallback(({data,label,sigType})=>
+    const addArray = useCallback(({label,sigType})=>
     {
+
+        let data = [];
+        for(let i = 0; i < MAX_DATA_POINTS; i++)
+        {
+            data.push({x:i,y:0});
+        }
+
         let arrName;
         switch(sigType)
         {
@@ -36,20 +43,20 @@ const SignalContextProvider = ({children}) =>
         if(signalArrayString === null)
         {
             const newArr = [{data: data, label: label}];
-            const newState = {...state,[arrName]:newArr};
+            const newState = {...state,[arrName]:newArr,arrayChanged:!state.arrayChanged};
             setState(newState);
             localStorage.setItem(arrName,JSON.stringify(newArr));
             return;
         }
         const signalArray = JSON.parse(signalArrayString);
-        if(signalArray.find(arr=>arr.label === label))
-        {
-            updateArray({data,label,sigType});
-            return;
-        }
+        // if(signalArray.find(arr=>arr.label === label))
+        // {
+        //     updateArray({data,label,sigType});
+        //     return;
+        // }
         signalArray.push({data: data, label: label});
         localStorage.setItem(arrName,JSON.stringify(signalArray));
-        const newState = {...state,[arrName]:signalArray};
+        const newState = {...state,[arrName]:signalArray,arrayChanged:!state.arrayChanged};
         setState(newState);
         return;
     },[state]);

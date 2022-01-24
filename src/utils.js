@@ -1,5 +1,6 @@
 
 export const MAX_SIGNALS = 5;
+export const MAX_DATA_POINTS = 10;
 
 
 export const MODES = 
@@ -39,6 +40,12 @@ export const signalLabels = (label,amount) =>
 
     return array;
 }
+
+export const round = (value, precision) => {
+    var multiplier = Math.pow(10, precision || 0);
+    return Math.round(value * multiplier) / multiplier;
+}
+
 
 export const STATUS = {
     LOADING: 'loading',
