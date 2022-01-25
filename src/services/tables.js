@@ -139,7 +139,7 @@ function checkParts(part1,part2,confArray)
     if(part1.length === 1 
         || part2.length === 1)
     {
-        return false;
+        return {canMerge:false};
     }
 
     if(part1.length > part2.length)
@@ -152,13 +152,13 @@ function checkParts(part1,part2,confArray)
                 {
                     if(isConflictingPair(part1[i],part2[j],confArray))
                     {
-                        return false;
+                        return {canMerge:false};
                     }
                     else
                     {
                         if(i === part1.length-1 && j === part2.length-1)
                         {
-                            return true;
+                            return {canMerge:true,specialCondition:true};
                         }
                     }
                 }
@@ -175,20 +175,20 @@ function checkParts(part1,part2,confArray)
                 {
                     if(isConflictingPair(part1[j],part2[i],confArray))
                     {
-                        return false;
+                        return {canMerge:false};
                     }
                     else
                     {
                         if(i === part2.length-1 && j === part1.length-1)
                         {
-                            return true;
+                            return {canMerge:true,specialCondition:true};
                         }
                     }
                 }
             }
         }
     }
-    return true;
+    return {canMerge:true,specialCondition:false};
 }
 function partCount(indexedParts)
 {
@@ -258,17 +258,24 @@ function checkPartForProblems(part,index,conflictingStates){
 function sameIndexParts(parts,confArray)
 {
     let canMerge = true;
+    let specialCondition = false;
     for(let i = 0; i<parts.length;i++){
         for(let j = i+1;j < parts.length;j++){
-            if(!checkParts(parts[i].part,parts[j].part,confArray)){
+            const check = checkParts(parts[i].part,parts[j].part,confArray);
+            if(!check.canMerge){
                 canMerge = false;
                 break;
+            }
+            else
+            {
+                specialCondition = check.specialCondition;
             }
         }
     }
     if(canMerge){
         parts.forEach(p=>p.index = parts[0].index);
     }
+    return {parts,canMerge,specialCondition};
 }
 function reductionStage(additionalBorderProcedure,borders,stack,conflictingStates)
 {
@@ -510,7 +517,35 @@ function findNearestState(conflictingStates,currentPart)
 
     return state;
 }
+function codeParts(odd,even,conflictingStates)
+{
+    const oddCoded = sameIndexParts(odd,conflictingStates);
+    const evenCoded = sameIndexParts(even,conflictingStates);
 
+    if(oddCoded.canMerge && oddCoded.specialCondition)
+    {
+        if(!evenCoded.canMerge)
+        {
+            let offset = 1;
+            odd.forEach((o,i)=>{
+                o.index = i+offset;
+                offset++;
+            });
+        }
+    }
+    else if(evenCoded.canMerge && evenCoded.specialCondition)
+    {
+        if(!oddCoded.canMerge)
+        {
+            let offset = 1;
+            even.forEach((e,i)=>{
+                e.index = i+offset;
+                offset++;
+            });
+        }
+    }
+
+}
 
 class TableService
 {
@@ -544,20 +579,23 @@ class TableService
                     break;
                 }
             }
+            let signalsOut = [];
             for(let j = 0; j < outArray.length;j++){
                     const data = outArray[j].data;
                     const { detected, type } = edgeDetector(data[i],data[i+1]);
                     if(detected){
-                        signalOut = {label: outArray[j].label, type: type};
-                        break;
+                        signalsOut.push({label: outArray[j].label, type: type});
                     }
             }
             if(signalIn.label !== '')
             {
                 dependencyArray.push({tact: tact,label: signalIn.label, type:signalIn.type});
-                if(signalOut.label !== ''){
-                    dependencyArray.push({tact: tact+1, label: signalOut.label, type: signalOut.type});
-                tact+=2;
+                if(signalsOut.length !== 0){
+
+                    signalsOut.forEach((s,i)=>{
+                        dependencyArray.push({tact: tact+1+i, label: s.label, type: s.type});
+                    });
+                    tact+=signalsOut.length+1;
                 }
                 else{
                     tact++;
@@ -822,11 +860,16 @@ class TableService
 
             // eslint-disable-next-line no-debugger
             debugger;
-            for(let i = 0; i < indexedParts.length; i++)
-            {
-                const filtered = indexedParts.filter((_,j)=> j % 2 === i % 2);
-                sameIndexParts(filtered,conflictingStates);
-            }
+            // for(let i = 0; i < indexedParts.length; i++)
+            // {
+            //     const filtered = indexedParts.filter((_,j)=> j % 2 === i % 2);
+            //     sameIndexParts(filtered,conflictingStates);
+            // }
+
+            const odd = indexedParts.filter((p)=> p.index % 2 === 1);
+            const even = indexedParts.filter((p)=> p.index % 2 === 0);
+
+            codeParts(odd,even,conflictingStates);
 
             const {indices} = partCount(indexedParts);
 

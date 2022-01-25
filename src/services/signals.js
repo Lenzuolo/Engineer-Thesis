@@ -24,7 +24,7 @@ class SignalService
 
     static CheckSignals(signalArray,data,label)
     {
-        if(!data)
+        if(!data || label.includes('Q'))
         {
             return false;
         }

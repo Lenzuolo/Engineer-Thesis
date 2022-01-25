@@ -48,12 +48,11 @@ const TimeChart = ({label,sigType}) =>
         updateSignals();
         if(data.length > maxTicks)
         {
-            const ratio = round(data.length/10,1);
-            const nextMax = MAX_DATA_POINTS * ratio + 5;
+            const nextMax = maxTicks + 2;
             const filledData = [...data];
             for(let i = data.length; i<nextMax;i++)
             {
-                filledData.push({x:i,y:0});
+                filledData.push({x:i,y:data[data.length-1].y});
             }
             updateArray({data: filledData,label,sigType},false);
             setData(filledData);
@@ -64,10 +63,10 @@ const TimeChart = ({label,sigType}) =>
         {
             setMaxTicks(MAX_DATA_POINTS);
         }
-        else if(data.length < maxTicks - 5)
+        else if(data.length < maxTicks - 2)
         {
-            const ratio = parseInt(Math.round(data.length/10));
-            setMaxTicks(10 * ratio + 5);
+            const nextMax = maxTicks - 2;
+            setMaxTicks(nextMax);
         }
     },[xVal,data.length,arrayChanged]);
 
