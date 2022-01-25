@@ -825,10 +825,10 @@ class TableService
             for(let i = 0; i < indexedParts.length; i++)
             {
                 const filtered = indexedParts.filter((_,j)=> j % 2 === i % 2);
-                sameIndexParts(filtered,conflictingStates)
+                sameIndexParts(filtered,conflictingStates);
             }
 
-            const {indices,repeats} = partCount(indexedParts);
+            const {indices} = partCount(indexedParts);
 
             let signalAmount = indices.length > 2 ? Math.ceil(indices.length/2) : 1;
             let signals = [];
