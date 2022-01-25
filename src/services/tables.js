@@ -142,8 +142,6 @@ function checkParts(part1,part2,confArray)
         return {canMerge:false};
     }
 
-    if(part1.length > part2.length)
-    {
         for(let i = 0; i < part1.length; i++)
         {
             for(let j = 0; j < part2.length; j++)
@@ -164,30 +162,6 @@ function checkParts(part1,part2,confArray)
                 }
             }
         }
-    }
-    else
-    {
-        for(let i = 0; i < part2.length; i++)
-        {
-            for(let j = 0; j < part1.length; j++)
-            {
-                if(part2[i].NSU === part1[j].NSU)
-                {
-                    if(isConflictingPair(part1[j],part2[i],confArray))
-                    {
-                        return {canMerge:false};
-                    }
-                    else
-                    {
-                        if(i === part2.length-1 && j === part1.length-1)
-                        {
-                            return {canMerge:true,specialCondition:true};
-                        }
-                    }
-                }
-            }
-        }
-    }
     return {canMerge:true,specialCondition:false};
 }
 function partCount(indexedParts)
@@ -349,7 +323,7 @@ function additionalBorderStage(additionalBorderProcedure,stack,currentPart,borde
     {
         if(!borders.includes(currentPart[i].tact))
         {
-            if((!isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates,prevPartEnd) &&
+            if((!conflictingStates.some(c=>c.value === currentPart[i].NSU) && !isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates,prevPartEnd) &&
                 !isAnotherConflict(currentPart[i],nextPartEnd,currentPart,conflictingStates,false)) || additionalBorderProcedure.doubleBorder)
                 {
                     borders.push(currentPart[i].tact);
