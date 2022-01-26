@@ -32,6 +32,19 @@ function findLastEdge(arr)
     return index;
 }
 
+function findMostRecentSignalChange(arrays)
+{
+    let index = 0;
+    arrays.forEach(a=>{
+        let i = findLastEdge(a.data);
+        if(i > index)
+        {
+            index = i;
+        }
+    })
+
+    return index;
+}
 class SignalService
 {
 
@@ -119,9 +132,13 @@ class SignalService
 
     static fillWithStartState(inArrays,outArrays)
     {
+        // eslint-disable-next-line no-debugger
+        debugger;
+        const signals = [...inArrays,...outArrays];
+        const index = findMostRecentSignalChange(signals);
+
         inArrays.forEach(i=>{
             const data = i.data;
-            const index = findLastEdge(data);
             if(data[index].y !== data[0].y)
             {
                 for(let j = index; j < data.length;j++)
@@ -133,7 +150,6 @@ class SignalService
 
         outArrays.forEach(o=>{
             const data = o.data;
-            const index = findLastEdge(data);
             if(data[index].y !== data[0].y)
             {
                 for(let j = index; j < data.length;j++)
