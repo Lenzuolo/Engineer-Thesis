@@ -64,6 +64,8 @@ const TableContextProvider = ({children}) => {
             conditionsArray.push(TableService.calculateConditions(arr.label,dependencyArray,nsuArray));
         });
 
+        // eslint-disable-next-line no-debugger
+        debugger;
         conditionsArray.forEach(c =>{
             for(let i = 0; i < c.workingConditions.length; i++){
                 for(let j = 0; j < c.notWorkingConditions.length; j++){
@@ -132,7 +134,7 @@ const TableContextProvider = ({children}) => {
 
 
         let isSolvable = false;
-        if(conflictingStates.length == 0){
+        if(conflictingStates.length === 0){
             isSolvable = true;
         }
 
@@ -147,7 +149,7 @@ const TableContextProvider = ({children}) => {
                 newState.initialState.conflictingStates = conflictingStates;
                 newState.initialState.notConflictingStates = notConflictingStates;
                 newState.initialState.conditionsArray = conditionsArray;
-                newState.solvable = isSolvable;
+                newState.initialState.solvable = isSolvable;
             }
             return newState;
         }));

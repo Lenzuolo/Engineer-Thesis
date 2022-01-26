@@ -132,8 +132,6 @@ class SignalService
 
     static fillWithStartState(inArrays,outArrays)
     {
-        // eslint-disable-next-line no-debugger
-        debugger;
         const signals = [...inArrays,...outArrays];
         const index = findMostRecentSignalChange(signals);
 
