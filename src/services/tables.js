@@ -288,6 +288,15 @@ function reductionStage(additionalBorderProcedure,borders,stack,conflictingState
         if(borders.length % 2 !== 0)
         {
             additionalBorderProcedure.isNeeded = true;
+            let length = 0;
+            stack.forEach((p,i)=>
+            {
+                if(p.length >= length)
+                {
+                    length = p.length;
+                    additionalBorderProcedure.stackIndex = i;
+                }
+            })
         }
         else{
             for(let i = 0; i < stack.length;i++)
@@ -305,6 +314,8 @@ function reductionStage(additionalBorderProcedure,borders,stack,conflictingState
 }
 function additionalBorderStage(additionalBorderProcedure,stack,currentPart,borders,notConflictingStates,conflictingStates)
 {
+    // eslint-disable-next-line no-debugger
+    debugger;
     let prevPartEnd;
     if(additionalBorderProcedure.stackIndex === 0)
     {
@@ -323,7 +334,7 @@ function additionalBorderStage(additionalBorderProcedure,stack,currentPart,borde
     {
         if(!borders.includes(currentPart[i].tact))
         {
-            if((!conflictingStates.some(c=>c.value === currentPart[i].NSU) && !isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates,prevPartEnd) &&
+            if((!isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates,prevPartEnd) &&
                 !isAnotherConflict(currentPart[i],nextPartEnd,currentPart,conflictingStates,false)) || additionalBorderProcedure.doubleBorder)
                 {
                     borders.push(currentPart[i].tact);
@@ -363,47 +374,65 @@ function additionalBorderStage(additionalBorderProcedure,stack,currentPart,borde
         isWrong ? additionalBorderProcedure.doubleBorder = true : additionalBorderProcedure.stackIndex++;
     }
 }
-function doubleBorderStage(doubleBorderProcedure,currentPart,stack,stateProps,indices,stateLists,borders,flags)
+function doubleBorderStage(doubleBorderProcedure,currentPart,stack,stateProps,indices,borders,flags)
 {
-    if(isNotConflictingState(currentPart,stateProps.nextPartEnd,
-        stateProps.nsuVal,stateLists.notConflictingStates,stateProps.prevPartEnd) || 
-            isAnotherConflict(stateProps.nsuVal,stateProps.nextPartEnd,currentPart,stateLists.conflictingStates,true))
+    if(!doubleBorderProcedure.firstBorder.set)
+    {
+        borders.push(stateProps.nsuVal.tact);
+        doubleBorderProcedure.firstBorder.set = true;
+        doubleBorderProcedure.firstBorder.index = currentPart.indexOf(stateProps.nsuVal)+1;
+        doubleBorderProcedure.firstBorder.tact = stateProps.nsuVal.tact;
+        if(stateProps.second-indices.offset > 0)
+        {
+            indices.offset++;
+        }
+        else
+        {
+            flags.mergeEndProcedure = true;
+            indices.offset = 1;
+        }
+    }
+    else
+    {
+        if(stateProps.first === stateProps.nsuVal.tact)
         {
             borders.push(stateProps.nsuVal.tact);
-            if(!doubleBorderProcedure.firstBorder.set)
+            const partIndex = stack.indexOf(currentPart);
+            const firstPart = currentPart.slice(0,currentPart.indexOf(stateProps.nsuVal)+1);
+            const secondPart = currentPart.slice(currentPart.indexOf(stateProps.nsuVal)+1,
+                doubleBorderProcedure.firstBorder.index);
+            const thirdPart = currentPart.slice(doubleBorderProcedure.firstBorder.index);
+            stack.splice(partIndex,1,firstPart,secondPart,thirdPart);
+            doubleBorderProcedure.isNeeded = false; 
+            doubleBorderProcedure.firstBorder = {set:false,index:-1,tact:-1};
+            if(flags.endOfCycle)
             {
-                doubleBorderProcedure.firstBorder.set = true;
-                doubleBorderProcedure.firstBorder.index = currentPart.indexOf(stateProps.nsuVal)+1;
-                doubleBorderProcedure.firstBorder.tact = stateProps.nsuVal.tact;
-                if(stateProps.second-indices.offset > 0)
-                {
-                    indices.offset++;
-                }
-                else{
-                    flags.mergeEndProcedure = true;
-                    indices.offset = 1;
-                }
+                flags.mergeEndProcedure = false;
+                flags.reduction = true;
+                flags.endOfCycle = false;
+            }
+            indices.offset = 1;
+        }
+        else
+        {
+            if(stateProps.second-indices.offset > 0)
+            {
+                indices.offset++;
             }
             else
             {
-                const partIndex = stack.indexOf(currentPart);
-                const firstPart = currentPart.slice(0,currentPart.indexOf(stateProps.nsuVal)+1);
-                const secondPart = currentPart.slice(currentPart.indexOf(stateProps.nsuVal)+1,
-                    doubleBorderProcedure.firstBorder.index);
-                const thirdPart = currentPart.slice(doubleBorderProcedure.firstBorder.index);
-                stack.splice(partIndex,1,firstPart,secondPart,thirdPart);
-                doubleBorderProcedure.isNeeded = false; 
-                doubleBorderProcedure.firstBorder = {set:false,index:-1,tact:-1};
-                if(flags.endOfCycle)
+                if(!flags.mergeEndProcedure)
                 {
-                    flags.mergeEndProcedure = false;
-                    flags.reduction = true;
-                    flags.endOfCycle = false;
+                    flags.mergeEndProcedure = true;
+                    indices.offset = 1;
+                    return;
                 }
-                indices.offset = 1;
+                indices.offset++;
             }
         }
+    }
 }
+
 function borderControl(doubleBorderProcedure,currentPart,stack,nsuArray,stateProps,indices,stateLists,borders,flags){
     if(!isNotConflictingState(currentPart,stateProps.nextPartEnd,
         stateProps.nsuVal,stateLists.notConflictingStates,stateProps.prevPartEnd) && 
@@ -800,7 +829,7 @@ class TableService
                     if(procedures.doubleBorderProcedure.isNeeded)
                     {
                         doubleBorderStage(procedures.doubleBorderProcedure,currentPart,stack,
-                            stateProps,indices,{conflictingStates,notConflictingStates},borders,flags);
+                            stateProps,indices,borders,flags);
                     }
                     else
                     {

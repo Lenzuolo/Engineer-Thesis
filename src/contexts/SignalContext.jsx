@@ -64,13 +64,16 @@ const SignalContextProvider = ({children}) =>
 
     const updateArray = useCallback(({data,label,sigType},undo)=>{     
         let arrName;
+        let secondArrName;
         switch(sigType)
         {
             case 'in':
                 arrName = 'inArrays';
+                secondArrName = 'outArrays';
                 break;
             case 'out':
                 arrName = 'outArrays';
+                secondArrName = 'inArrays';
                 break;
             default:
                 break;
@@ -89,8 +92,12 @@ const SignalContextProvider = ({children}) =>
                 }
             });
             signalArray = SignalService.ContinueSignal(signalArray,data,label,undo,);
+
+            let secondSignalArray = JSON.parse(localStorage.getItem(secondArrName));
+            secondSignalArray = SignalService.ContinueSignal(secondSignalArray,data,label,undo,);
             localStorage.setItem(arrName,JSON.stringify(signalArray));
-            const newState = {...state,[arrName]:signalArray,arrayChanged:!state.arrayChanged};
+            localStorage.setItem(secondArrName,JSON.stringify(secondSignalArray));
+            const newState = {...state,[arrName]:signalArray,[secondArrName]:secondSignalArray,arrayChanged:!state.arrayChanged};
             setState(newState);
             return true;
         }
@@ -152,9 +159,9 @@ const SignalContextProvider = ({children}) =>
         if(max === 0){
             return {correct:false,reason: 'Żadne wykresy nie posiadają wartości'};
         }
-        const {inArrays,outArrays,updatedLength} = SignalService.fillWithStartState(state.inArrays,state.outArrays,max,label.includes('X') ? 'in':'out');
+        const {inArrays,outArrays} = SignalService.fillWithStartState(state.inArrays,state.outArrays/*,max,label.includes('X') ? 'in':'out'*/);
 
-        if(!SignalService.isSequentialCircuit(inArrays,outArrays,updatedLength))
+        if(!SignalService.isSequentialCircuit(inArrays,outArrays,max))
         {
             return {correct: false, reason:'Układ nie jest układem sekwencyjnym'}
         }
@@ -167,12 +174,12 @@ const SignalContextProvider = ({children}) =>
             let newState = prev;
             newState.inArrays = inArrays;
             newState.outArrays = outArrays;
-            newState.length = updatedLength;
+            newState.length = max;
             newState.arrayChanged = changed;
             return newState;
         });
 
-        return {inArrays:inArrays,outArrays:outArrays,length:updatedLength,correct:true};
+        return {inArrays:inArrays,outArrays:outArrays,length:max,correct:true};
     },[state]);
 
 
