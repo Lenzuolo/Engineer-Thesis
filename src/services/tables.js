@@ -317,15 +317,16 @@ function additionalBorderStage(additionalBorderProcedure,stack,currentPart,borde
     // eslint-disable-next-line no-debugger
     debugger;
     let prevPartEnd;
+    let prevPart;
     if(additionalBorderProcedure.stackIndex === 0)
     {
-        const prevPart = stack[stack.length-1];
+         prevPart = stack[stack.length-1];
         if(additionalBorderProcedure.bordersAmount !== 2)
             prevPartEnd = prevPart[prevPart.length-1].tact;
     }
     else
     {
-        const prevPart = stack[additionalBorderProcedure.stackIndex-1];
+        prevPart = stack[additionalBorderProcedure.stackIndex-1];
         if(additionalBorderProcedure.bordersAmount !== 2)
             prevPartEnd = prevPart[prevPart.length-1].tact;
     }
@@ -335,7 +336,9 @@ function additionalBorderStage(additionalBorderProcedure,stack,currentPart,borde
         if(!borders.includes(currentPart[i].tact))
         {
             if((!isNotConflictingState(currentPart,nextPartEnd,currentPart[i],notConflictingStates,prevPartEnd) &&
-                !isAnotherConflict(currentPart[i],nextPartEnd,currentPart,conflictingStates,false)) || additionalBorderProcedure.doubleBorder)
+                !isAnotherConflict(currentPart[i],nextPartEnd,currentPart,conflictingStates,false) &&
+                    !currentPart.slice(0,i+1).find(f=>f.NSU === prevPart[prevPart.length-1].NSU)) || 
+                        additionalBorderProcedure.doubleBorder)
                 {
                     borders.push(currentPart[i].tact);
                     additionalBorderProcedure.borderAdded = true;
@@ -815,7 +818,7 @@ class TableService
                         nsuArray[nsuArray.length-indices.offset].tact : second - indices.offset;
                     let nextPartEnd = procedures.doubleBorderProcedure.firstBorder.set ? 
                         procedures.doubleBorderProcedure.firstBorder.tact : 
-                            currentPart[currentPart.length-1].tact;
+                            (stack.length > 1 ? stack[0][stack[0].length-1].tact : currentPart[currentPart.length-1].tact);
                     let nsuVal = currentPart.find(n=>n.tact === tact);
 
                     let stateProps = {
