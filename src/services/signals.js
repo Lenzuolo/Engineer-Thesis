@@ -19,6 +19,19 @@ function findMaxLength(arr)
     return {max,label};
 }
 
+function findLastEdge(arr)
+{
+    let index = 0;
+    for(let i = 0; i < arr.length-1;i++)
+    {
+        if(edgeDetector(arr[i],arr[i+1]))
+        {
+            index = i + 1;
+        }
+    }
+    return index;
+}
+
 class SignalService
 {
 
@@ -104,87 +117,116 @@ class SignalService
         }
     }
 
-    static fillWithStartState(inArrays,outArrays,length,dominating)
+    static fillWithStartState(inArrays,outArrays)
     {
-        let updatedLength;
-        if(dominating === 'in')
-        {
-            inArrays.forEach(i=>
+        inArrays.forEach(i=>{
+            const data = i.data;
+            const index = findLastEdge(data);
+            if(data[index].y !== data[0].y)
+            {
+                for(let j = index; j < data.length;j++)
                 {
-                    const arrLength = i.data.length;
-                    const diff = length-arrLength;
-                    const lastElem = i.data[arrLength-1];
-                    if(diff===0 && lastElem.y !== i.data[0].y)
-                    {
-                        i.data.push({x:lastElem.x+1,y:i.data[0].y});
-                        this.ContinueSignal(inArrays,i.data,i.label,false);
-                    }
-                    for(let j = 0; j < diff;j++)
-                    {
-                        i.data.push({x:lastElem.x+1,y:i.data[0].y});
-                    }
-                });
-        
-                updatedLength = findMaxLength([...inArrays,...outArrays]);
+                    data[j].y = data[0].y;
+                }
+            }
+        });
 
-                outArrays.forEach(o=>
+        outArrays.forEach(o=>{
+            const data = o.data;
+            const index = findLastEdge(data);
+            if(data[index].y !== data[0].y)
+            {
+                for(let j = index; j < data.length;j++)
                 {
-                    const arrLength = o.data.length;
-                    const diff = updatedLength.max-arrLength;
-                    const lastElem = o.data[arrLength-1];
-                    if(diff===0 && lastElem.y !== o.data[0].y)
-                    {
-                        o.data.push({x:lastElem.x+1,y:o.data[0].y});
-                        this.ContinueSignal(inArrays,o.data,o.label,false);
-                    }
-                    for(let i = 0; i < diff;i++)
-                    {
-                    o.data.push({x:lastElem.x+1,y:o.data[0].y});
-                    }
-                });
-        
-        }
-        else
-        {
-            outArrays.forEach(o=>
-                {
-                    const arrLength = o.data.length;
-                    const diff = length-arrLength;
-                    const lastElem = o.data[arrLength-1];
-                    if(diff===0 && lastElem.y !== o.data[0].y)
-                    {
-                        o.data.push({x:lastElem.x+1,y:o.data[0].y});
-                        this.ContinueSignal(inArrays,o.data,o.label,false);
-                    }
-                    for(let i = 0; i < diff;i++)
-                    {
-                    o.data.push({x:lastElem.x+1,y:o.data[0].y});
-                    }
-                });
+                    data[j].y = data[0].y;
+                }
+            }
+        });
 
-            updatedLength = findMaxLength([...inArrays,...outArrays]);
-
-
-            inArrays.forEach(i=>
-                {
-                    const arrLength = i.data.length;
-                    const diff = updatedLength.max-arrLength;
-                    const lastElem = i.data[arrLength-1];
-                    if(diff===0 && lastElem.y !== i.data[0].y)
-                    {
-                        i.data.push({x:lastElem.x+1,y:i.data[0].y});
-                        this.ContinueSignal(inArrays,i.data,i.label,false);
-                    }
-                    for(let j = 0; j < diff;j++)
-                    {
-                        i.data.push({x:lastElem.x+1,y:i.data[0].y});
-                    }
-                });
-        }
-
-
-        return {inArrays,outArrays,updatedLength:updatedLength.max};
+        return {inArrays,outArrays};
     }
+
+    // static fillWithStartState(inArrays,outArrays,length,dominating)
+    // {
+    //     let updatedLength;
+    //     if(dominating === 'in')
+    //     {
+    //         inArrays.forEach(i=>
+    //             {
+    //                 const arrLength = i.data.length;
+    //                 const diff = length-arrLength;
+    //                 const lastElem = i.data[arrLength-1];
+    //                 if(diff===0 && lastElem.y !== i.data[0].y)
+    //                 {
+    //                     i.data.push({x:lastElem.x+1,y:i.data[0].y});
+    //                     this.ContinueSignal(inArrays,i.data,i.label,false);
+    //                 }
+    //                 for(let j = 0; j < diff;j++)
+    //                 {
+    //                     i.data.push({x:lastElem.x+1,y:i.data[0].y});
+    //                 }
+    //             });
+        
+    //             updatedLength = findMaxLength([...inArrays,...outArrays]);
+
+    //             outArrays.forEach(o=>
+    //             {
+    //                 const arrLength = o.data.length;
+    //                 const diff = updatedLength.max-arrLength;
+    //                 const lastElem = o.data[arrLength-1];
+    //                 if(diff===0 && lastElem.y !== o.data[0].y)
+    //                 {
+    //                     o.data.push({x:lastElem.x+1,y:o.data[0].y});
+    //                     this.ContinueSignal(inArrays,o.data,o.label,false);
+    //                 }
+    //                 for(let i = 0; i < diff;i++)
+    //                 {
+    //                 o.data.push({x:lastElem.x+1,y:o.data[0].y});
+    //                 }
+    //             });
+        
+    //     }
+    //     else
+    //     {
+    //         outArrays.forEach(o=>
+    //             {
+    //                 const arrLength = o.data.length;
+    //                 const diff = length-arrLength;
+    //                 const lastElem = o.data[arrLength-1];
+    //                 if(diff===0 && lastElem.y !== o.data[0].y)
+    //                 {
+    //                     o.data.push({x:lastElem.x+1,y:o.data[0].y});
+    //                     this.ContinueSignal(inArrays,o.data,o.label,false);
+    //                 }
+    //                 for(let i = 0; i < diff;i++)
+    //                 {
+    //                 o.data.push({x:lastElem.x+1,y:o.data[0].y});
+    //                 }
+    //             });
+
+    //         updatedLength = findMaxLength([...inArrays,...outArrays]);
+
+
+    //         inArrays.forEach(i=>
+    //             {
+    //                 const arrLength = i.data.length;
+    //                 const diff = updatedLength.max-arrLength;
+    //                 const lastElem = i.data[arrLength-1];
+    //                 if(diff===0 && lastElem.y !== i.data[0].y)
+    //                 {
+    //                     i.data.push({x:lastElem.x+1,y:i.data[0].y});
+    //                     this.ContinueSignal(inArrays,i.data,i.label,false);
+    //                 }
+    //                 for(let j = 0; j < diff;j++)
+    //                 {
+    //                     i.data.push({x:lastElem.x+1,y:i.data[0].y});
+    //                 }
+    //             });
+    //     }
+
+
+    //     return {inArrays,outArrays,updatedLength:updatedLength.max};
+    // }
 
     static isSequentialCircuit(inArray,outArray,length)
     {
