@@ -854,15 +854,15 @@ class TableService
    {
        let newDependencies = [...dependencies];
        let useOneSignal = borders.length === 2;
+       const indexedParts = parts.map((p,i)=> ({index:i+1,part: p}));
        if(useOneSignal)
        {
             newDependencies.push({tact: borders[0]+0.5,label: 'Z0',type:'rising'});
             newDependencies.push({tact: borders[1]+0.5,label: 'Z0',type:'falling'});
             newDependencies.sort((a,b) => a.tact - b.tact);
-            return {dependencies:newDependencies,tacts:newDependencies.length,labels:[{label:'Z0',signalChanges:['-','+','-']}],indices:[1,2]};
+            return {dependencies:newDependencies,tacts:newDependencies.length,labels:[{label:'Z0',signalChanges:['-','+','-']}],indices:indexedParts};
        }
        else{
-            const indexedParts = parts.map((p,i)=> ({index:i+1,part: p}));
 
             // eslint-disable-next-line no-debugger
             debugger;
