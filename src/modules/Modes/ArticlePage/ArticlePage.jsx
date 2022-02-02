@@ -30,6 +30,6 @@ const ArticlePage = ({path}) =>
             </Card>
         </div>
     )
-}
+};
 
 export default ArticlePage;

@@ -8,9 +8,6 @@ import { displayNotification } from '../../../../components';
 import { options} from './options';
 import { MAX_DATA_POINTS, round } from '../../../../utils';
 
-
-
-
 const TimeChart = ({label,sigType}) => 
 {
 
@@ -256,8 +253,6 @@ const TimeChart = ({label,sigType}) =>
             </div>
         </Card>
     );
-
-
-}
+};
 
 export default TimeChart;

@@ -15,7 +15,7 @@ const Calculator = () =>
     const [signalsOut,setSignalsOut] = useState(1);
     const [mappedLabelsIn,setMappedLabelsIn]=useState([]);
     const [mappedLabelsOut,setMappedLabelsOut]=useState([]);
-    const {clearSignalContext,areSignalsCorrect,addArray,deleteArray,allSignalsInInitialState} = React.useContext(SignalContext);
+    const {clearSignalContext,areSignalsCorrect,addArray,deleteArray,allSignalsInInitialState} = useContext(SignalContext);
     const {checkSolvable,calculateTableValues,solvable,solveTable,calculationStatus,clearTableContext} = useContext(TableContext);
     const [disabled,setDisabled] = useState(false);
     const [visible,setVisible] = useState(false);

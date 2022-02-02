@@ -34,6 +34,7 @@ function isNotConflictingState(part,nextPartEnd,state,notConfArray,prevPartEnd){
     }
     return false;
 }
+
 function equalsStartState(dependencyArray,state)
 {
     const arr = dependencyArray.filter(da => da.tact === 0);
@@ -435,7 +436,6 @@ function doubleBorderStage(doubleBorderProcedure,currentPart,stack,stateProps,in
         }
     }
 }
-
 function borderControl(doubleBorderProcedure,currentPart,stack,nsuArray,stateProps,indices,stateLists,borders,flags){
     if(!isNotConflictingState(currentPart,stateProps.nextPartEnd,
         stateProps.nsuVal,stateLists.notConflictingStates,stateProps.prevPartEnd) && 
@@ -576,7 +576,7 @@ class TableService
         for(let i = 0; i < length-1; i++)
         {
             let signalIn = {label: '', type: ''};
-            let signalOut = {label: '',type: ''};
+
             for(let j = 0; j<inArray.length;j++){
                 const data = inArray[j].data;
                 const { detected, type } = edgeDetector(data[i],data[i+1]);
@@ -585,16 +585,16 @@ class TableService
                     break;
                 }
             }
-            let signalsOut = [];
-            for(let j = 0; j < outArray.length;j++){
-                    const data = outArray[j].data;
-                    const { detected, type } = edgeDetector(data[i],data[i+1]);
-                    if(detected){
-                        signalsOut.push({label: outArray[j].label, type: type});
-                    }
-            }
             if(signalIn.label !== '')
             {
+                let signalsOut = [];
+                for(let j = 0; j < outArray.length;j++){
+                        const data = outArray[j].data;
+                        const { detected, type } = edgeDetector(data[i],data[i+1]);
+                        if(detected){
+                            signalsOut.push({label: outArray[j].label, type: type});
+                        }
+                }
                 dependencyArray.push({tact: tact,label: signalIn.label, type:signalIn.type});
                 if(signalsOut.length !== 0){
 
@@ -607,18 +607,8 @@ class TableService
                     tact++;
                 }
             }
-            else
-            {
-                if(signalOut.label !== '')
-                {
-                    dependencyArray.push({tact: tact, label: signalOut.label, type: signalOut.type});
-                    tact++;
-                }
-            }
         }
         return {tacts: tact-1, dependencies: dependencyArray}
-
-
     }
     static calculateNSU(dependencies,signals){
 
@@ -652,10 +642,6 @@ class TableService
         {
             nsuArray.splice(0,startCount,{tact:0,NSU:nsuArray[startCount-1].NSU});
         }
-
-        // if(dependencies[dependencies.length-1].type==='falling'){
-        //      nsuArray.pop();
-        // }
 
         if(nsuArray[nsuArray.length-1].NSU === nsuArray[0].NSU)
         {
@@ -738,8 +724,7 @@ class TableService
         let indices = {offset:1,};
         let borders = [];
         let stack = [[...nsuArray]];
-        // eslint-disable-next-line no-debugger
-        debugger
+
         while(!flags.solved)
         {
             if(flags.reduction)
@@ -851,7 +836,7 @@ class TableService
         return {borders,stack};
     }
     static codeSignals(borders,parts,dependencies,{conflictingStates})
-   {
+    {
        let newDependencies = [...dependencies];
        let useOneSignal = borders.length === 2;
        const indexedParts = parts.map((p,i)=> ({index:i+1,part: p}));
@@ -863,14 +848,6 @@ class TableService
             return {dependencies:newDependencies,tacts:newDependencies.length,labels:[{label:'Z0',signalChanges:['-','+','-']}],indices:indexedParts};
        }
        else{
-
-            // eslint-disable-next-line no-debugger
-            debugger;
-            // for(let i = 0; i < indexedParts.length; i++)
-            // {
-            //     const filtered = indexedParts.filter((_,j)=> j % 2 === i % 2);
-            //     sameIndexParts(filtered,conflictingStates);
-            // }
 
             const odd = indexedParts.filter((p)=> p.index % 2 === 1);
             const even = indexedParts.filter((p)=> p.index % 2 === 0);

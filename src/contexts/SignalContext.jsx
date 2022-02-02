@@ -49,11 +49,6 @@ const SignalContextProvider = ({children}) =>
             return;
         }
         const signalArray = JSON.parse(signalArrayString);
-        // if(signalArray.find(arr=>arr.label === label))
-        // {
-        //     updateArray({data,label,sigType});
-        //     return;
-        // }
         signalArray.push({data: data, label: label});
         localStorage.setItem(arrName,JSON.stringify(signalArray));
         const newState = {...state,[arrName]:signalArray,arrayChanged:!state.arrayChanged};
@@ -154,12 +149,12 @@ const SignalContextProvider = ({children}) =>
             }
         const signalArray = [...state.inArrays,...state.outArrays];
 
-        if(signalArray.some(s=>s.data.length === 0)) return {correct:false,reason:'Niektóre wykresy nie posiadają wartości'}
-        const {max,label} = findMaxLength(signalArray);
+        if(signalArray.some(s=>s.data.every(d => d.y === 0))) return {correct:false,reason:'Niektóre wykresy nie posiadają wartości'}
+        const {max} = findMaxLength(signalArray);
         if(max === 0){
             return {correct:false,reason: 'Żadne wykresy nie posiadają wartości'};
         }
-        const {inArrays,outArrays} = SignalService.fillWithStartState(state.inArrays,state.outArrays/*,max,label.includes('X') ? 'in':'out'*/);
+        const {inArrays,outArrays} = SignalService.fillWithStartState(state.inArrays,state.outArrays);
 
         if(!SignalService.isSequentialCircuit(inArrays,outArrays,max))
         {

@@ -11,7 +11,7 @@ const Modes = ({modeId}) =>
         case MODES.HuffmanExamples:
             return (<Empty description='Tu beda przyklady Huffmana'/>);
         case MODES.HuffmanTheory:
-            return (<Empty description='Tu bedzie teoria z Huffmana'/>);
+            return (<ArticlePage path='/Huffman - Teoria.pdf'/>);
         case MODES.SequentialTheory:
             return (<ArticlePage path={'/Układy sekwencyjne.pdf'}/>);
         case MODES.SiwinskiCalculate:

@@ -64,8 +64,6 @@ const TableContextProvider = ({children}) => {
             conditionsArray.push(TableService.calculateConditions(arr.label,dependencyArray,nsuArray));
         });
 
-        // eslint-disable-next-line no-debugger
-        debugger;
         conditionsArray.forEach(c =>{
             for(let i = 0; i < c.workingConditions.length; i++){
                 for(let j = 0; j < c.notWorkingConditions.length; j++){
@@ -82,9 +80,7 @@ const TableContextProvider = ({children}) => {
 
         conflictingStates.sort((a,b)=> {
             if(a.tacts[1] === b.tacts[1])
-            // {
                 return a.tacts[0] - b.tacts[0];
-            // }
             return a.tacts[1] - b.tacts[1];
         });
 

@@ -65,7 +65,6 @@ const Statistics = ({initial}) =>{
 
     }
 
-
     return(
         <>
         {
@@ -84,6 +83,6 @@ const Statistics = ({initial}) =>{
         }
         </>    
     );
-}
+};
 
 export default Statistics;
