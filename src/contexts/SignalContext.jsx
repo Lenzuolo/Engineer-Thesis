@@ -161,6 +161,13 @@ const SignalContextProvider = ({children}) =>
             return {correct: false, reason:'Układ nie jest układem sekwencyjnym'}
         }
 
+        const {correct,reason} = SignalService.isSolitaryOutSignal(inArrays,outArrays,max);
+
+        if(!correct)
+        {
+            return {correct,reason};
+        }
+
         localStorage.setItem('inArrays',JSON.stringify(inArrays));
         localStorage.setItem('outArrays',JSON.stringify(outArrays));
         const changed = !state.arrayChanged;

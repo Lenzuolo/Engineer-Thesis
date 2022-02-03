@@ -209,7 +209,7 @@ function whichSignalIsDifferent(prevState,state)
         }
     }
 }
-function checkPartForProblems(part,index,conflictingStates){
+function checkPartForProblems(part,index,conflictingStates,prevPart){
     
     const lastElem = part[part.length-1];
     const sliced = part.slice(0,part.length-1);
@@ -226,6 +226,11 @@ function checkPartForProblems(part,index,conflictingStates){
         if(isStateInPart(conflictingStates[i].tacts[0],part) && isStateInPart(conflictingStates[i].tacts[1],part)){
             return { isWrong: true, bordersAmount: 2, index};
         }
+    }
+
+    if(lastElem.NSU === prevPart[prevPart.length-1].NSU)
+    {
+        return { isWrong: true, bordersAmount: 2, index};
     }
 
     return { isWrong: false, bordersAmount: 0};
@@ -275,7 +280,7 @@ function reductionStage(additionalBorderProcedure,borders,stack,conflictingState
     });
 
     let problems = mergeIndices.length <= 1 ? { isWrong:true } :
-        checkPartForProblems(toReduce,mergeIndices[0],conflictingStates);
+        checkPartForProblems(toReduce,mergeIndices[0],conflictingStates,mergeIndices[0] === 0 ? stack[stack.length-1] : stack[mergeIndices[0]-1]);
 
     reducable = problems.isWrong ? false : true;
 
@@ -300,9 +305,11 @@ function reductionStage(additionalBorderProcedure,borders,stack,conflictingState
             })
         }
         else{
+            // eslint-disable-next-line no-debugger
+            debugger;
             for(let i = 0; i < stack.length;i++)
             {
-                const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates);
+                const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates,i === 0 ? stack[stack.length-1] : stack[i-1]);
                 if(isWrong){
                     additionalBorderProcedure.stackIndex = index;
                     additionalBorderProcedure.bordersAmount = bordersAmount;
@@ -362,7 +369,7 @@ function additionalBorderStage(additionalBorderProcedure,stack,currentPart,borde
             additionalBorderProcedure.isNeeded = false;
             for(let i = 0; i < stack.length;i++)
             {
-                const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates);
+                const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates,i === 0 ? stack[stack.length-1] : stack[i-1]);
                 if(isWrong){
                     additionalBorderProcedure.stackIndex = index;
                     additionalBorderProcedure.bordersAmount = bordersAmount;
@@ -374,8 +381,17 @@ function additionalBorderStage(additionalBorderProcedure,stack,currentPart,borde
     }
     else
     {
-        const {isWrong} = checkPartForProblems(currentPart,additionalBorderProcedure.stackIndex,conflictingStates);
-        isWrong ? additionalBorderProcedure.doubleBorder = true : additionalBorderProcedure.stackIndex++;
+        const {isWrong} = checkPartForProblems(currentPart,additionalBorderProcedure.stackIndex,
+            conflictingStates,additionalBorderProcedure.stackIndex === 0 ? stack[stack.length-1] : stack[additionalBorderProcedure.stackIndex-1]);
+        if(isWrong)
+        {
+            additionalBorderProcedure.doubleBorder = true;
+        }
+        else
+        {
+            additionalBorderProcedure.stackIndex !== stack.length-1 ?
+                additionalBorderProcedure.stackIndex++ : additionalBorderProcedure.stackIndex = 0;
+        }
     }
 }
 function doubleBorderStage(doubleBorderProcedure,currentPart,stack,stateProps,indices,borders,flags)
@@ -739,7 +755,7 @@ class TableService
                     }
                     for(let i = 0; i < stack.length;i++)
                     {
-                        const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates);
+                        const {isWrong,index,bordersAmount} = checkPartForProblems(stack[i],i,conflictingStates,i === 0 ? stack[stack.length-1]:stack[i-1]);
                         if(isWrong){
                             procedures.additionalBorderProcedure.stackIndex = index;
                             procedures.additionalBorderProcedure.bordersAmount = bordersAmount;

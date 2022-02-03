@@ -187,6 +187,21 @@ class SignalService
 
         return isSequentialCircuit;
     }
+
+    static isSolitaryOutSignal(inArray,outArray,length)
+    {
+        for(let k = 0; k < outArray.length;k++)
+        {
+            for(let j = 0; j < length-1; j++)
+            {
+                if(edgeDetector(outArray[k].data[j],outArray[k].data[j+1]) && !inArray.some(i=>edgeDetector(i.data[j],i.data[j+1])))
+                {
+                    return {correct: false, reason: `Sygnał wyjściowy ${outArray[k].label} zmienia się niezależnie od wejścia`};
+                }
+            }
+        }
+        return {correct: true}
+    }
 }
 
 export {SignalService,findMaxLength};
